@@ -21,16 +21,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.tap4j.model;
+package org.tap4j.consumer;
 
-import java.io.Serializable;
 
 /**
- * A marker interface for TAP elements.
+ * Factory class to produce TAP Consumers.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public interface TapElement extends Serializable {
+public final class ConsumerFactory {
+
+	private ConsumerFactory() {
+		super();
+	}
+
+	/**
+	 * Produces a new TAP version 13 Consumer.
+	 * 
+	 * @return TAP Consumer.
+	 */
+	public static Consumer makeTap13Consumer() {
+		return new Tap13Consumer();
+	}
+
+	/**
+	 * Produces a new TAP version 13 Consumer with YAML diagnostics.
+	 * 
+	 * @return TAP Consumer with YAML support.
+	 */
+	public static Consumer makeTap13YamlConsumer() {
+		throw new RuntimeException("Not implemented");
+	}
 
 }

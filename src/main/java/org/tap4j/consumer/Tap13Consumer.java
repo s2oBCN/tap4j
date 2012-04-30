@@ -21,16 +21,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.tap4j.model;
+package org.tap4j.consumer;
 
-import java.io.Serializable;
+import java.io.File;
+
+import org.tap4j.model.TestSet;
+import org.tap4j.parser.ParserException;
 
 /**
- * A marker interface for TAP elements.
- * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public interface TapElement extends Serializable {
+public class Tap13Consumer implements Consumer {
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.tap4j.consumer.TapConsumer#load(java.io.File)
+	 */
+	public TestSet load(File file) throws ConsumerException {
+		
+		try {
+			// TODO control the parser here
+			return null;
+		} catch (ParserException e) {
+			throw new ConsumerException("Failed to parse file " + file
+					+ ": " + e.getMessage(), e);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.tap4j.consumer.TapConsumer#load(java.lang.String)
+	 */
+	public TestSet load(String tapStream) throws ConsumerException {
+		try {
+			// TODO control the parser here
+			return null;
+		} catch (ParserException e) {
+			throw new ConsumerException("Failed to parse stream " + tapStream
+					+ ": " + e.getMessage(), e);
+		}
+	}
 
 }

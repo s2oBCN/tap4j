@@ -24,15 +24,11 @@
 package org.tap4j.model;
 
 /**
- * A TAP Line. A TAP line represents a TestResult or a BailOut.
+ * A TAP Result. A TAP Result represents a TestResult or a BailOut.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public abstract class TapResult 
-extends AbstractTapElementDiagnostic
-{
+public interface TapResult extends TapElement {
 
-	private static final long serialVersionUID = 4067296755403797184L;
-	
 }

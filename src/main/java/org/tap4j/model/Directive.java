@@ -25,70 +25,55 @@ package org.tap4j.model;
 
 import java.io.Serializable;
 
-import org.tap4j.util.DirectiveValues;
-
 /**
  * Represents a Test Directive. Usually it would be a TO DO or SKIP directive.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public class Directive 
-implements Serializable
-{
-	private static final long serialVersionUID = 1L;
-	
+public class Directive implements Serializable {
+	private static final long serialVersionUID = 4259454717844916049L;
+
+	public enum ID {
+		SKIP, TODO
+	}
+
 	/**
 	 * Directive Value (TO DO, SKIP).
 	 */
-	private final DirectiveValues directiveValue;
-	
+	private final Directive.ID directiveValue;
+
 	/**
 	 * Reason for the directive.
 	 */
 	private final String reason;
-	
+
 	/**
 	 * Constructor with parameters.
 	 * 
-	 * @param directiveValue Directive Value.
-	 * @param reason Reason for the directive.
+	 * @param directiveValue
+	 *            Directive Value.
+	 * @param reason
+	 *            Reason for the directive.
 	 */
-	public Directive( DirectiveValues directiveValue, String reason )
-	{
+	public Directive(Directive.ID directiveValue, String reason) {
 		super();
 		this.directiveValue = directiveValue;
 		this.reason = reason;
 	}
-	
+
 	/**
 	 * @return Directive Value.
 	 */
-	public DirectiveValues getDirectiveValue()
-	{
+	public Directive.ID getDirectiveValue() {
 		return this.directiveValue;
 	}
-	
+
 	/**
 	 * @return Reason for the directive.
 	 */
-	public String getReason()
-	{
+	public String getReason() {
 		return this.reason;
 	}
-	
-	@Override
-	public String toString()
-	{
-		StringBuilder sb = new StringBuilder();
-		sb.append( " # " );
-		sb.append( directiveValue );
-		if ( this.reason != null )
-		{
-			sb.append( ' ' );
-			sb.append( this.reason );
-		}
-		return sb.toString();
-	}
-	
+
 }

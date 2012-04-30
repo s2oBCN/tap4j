@@ -1,7 +1,7 @@
-/*
+/* 
  * The MIT License
- *
- * Copyright (c) <2010> <tap4j>
+ * 
+ * Copyright (c) 2010 Bruno P. Kinoshita <http://www.kinoshita.eti.br>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,16 +21,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.tap4j.model;
+package org.tap4j.consumer;
 
-import java.io.Serializable;
+import java.io.File;
+
+import org.tap4j.model.TestSet;
 
 /**
- * A marker interface for TAP elements.
+ * TAP Consumer is the responsible for generating the TAP Stream.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public interface TapElement extends Serializable {
+public interface Consumer {
+
+	/**
+	 * Parses a TAP File.
+	 * 
+	 * @param file
+	 *            TAP File.
+	 * @return TestSet
+	 * @throws ConsumerException
+	 */
+	TestSet load(File file) throws ConsumerException;
+
+	/**
+	 * Parses a TAP Stream.
+	 * 
+	 * @param tapStream
+	 *            TAP Stream
+	 * @return TestSet
+	 * @throws ConsumerException
+	 */
+	TestSet load(String tapStream) throws ConsumerException;
 
 }

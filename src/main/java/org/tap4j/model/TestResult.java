@@ -23,33 +23,32 @@
  */
 package org.tap4j.model;
 
-import org.tap4j.util.StatusValues;
-import org.tap4j.util.Util;
-
 /**
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public class TestResult 
-extends TapResult
-{
-	private static final long serialVersionUID = 1L;
-	
+public class TestResult extends AbstractTapDiagnosticableElement implements TapResult {
+	private static final long serialVersionUID = -3820267013119628L;
+
+	public enum STATUS {
+		OK, NOT_OK
+	}
+
 	/**
 	 * Test Status (OK, NOT OK).
 	 */
-	private StatusValues status;
+	private TestResult.STATUS status;
 
 	/**
-	  * Test Number.
-	  */
+	 * Test Number.
+	 */
 	private Integer testNumber;
-	
+
 	/**
 	 * Description of the test.
 	 */
 	private String description;
-	
+
 	/**
 	 * Directive of the test (TO DO, SKIP).
 	 */
@@ -59,22 +58,22 @@ extends TapResult
 	 * Comment.
 	 */
 	private Comment comment;
-	
-	public TestResult()
-	{
+
+	public TestResult() {
 		super();
-		this.status = StatusValues.NOT_OK;
+		this.status = STATUS.NOT_OK;
 		this.testNumber = -1;
 	}
-	
+
 	/**
 	 * Constructor with parameter.
 	 * 
-	 * @param testStatus Status of the test.
-	 * @param testNumber Number of the test.
+	 * @param testStatus
+	 *            Status of the test.
+	 * @param testNumber
+	 *            Number of the test.
 	 */
-	public TestResult( StatusValues testStatus, Integer testNumber )
-	{
+	public TestResult(TestResult.STATUS testStatus, Integer testNumber) {
 		super();
 		this.status = testStatus;
 		this.testNumber = testNumber;
@@ -83,98 +82,76 @@ extends TapResult
 	/**
 	 * @return Status of the test.
 	 */
-	public StatusValues getStatus()
-	{
+	public TestResult.STATUS getStatus() {
 		return this.status;
 	}
 
 	/**
-	 * @param status Status of the test.
+	 * @param status
+	 *            Status of the test.
 	 */
-	public void setStatus( StatusValues status )
-	{
+	public void setStatus(TestResult.STATUS status) {
 		this.status = status;
 	}
-	
+
 	/**
 	 * @return Test Number.
 	 */
-	public Integer getTestNumber()
-	{
+	public Integer getTestNumber() {
 		return this.testNumber;
 	}
-	
+
 	/**
-	 * @param testNumber Test Number.
+	 * @param testNumber
+	 *            Test Number.
 	 */
-	public void setTestNumber( Integer testNumber )
-	{
+	public void setTestNumber(Integer testNumber) {
 		this.testNumber = testNumber;
 	}
-	
+
 	/**
 	 * @return Test description.
 	 */
-	public String getDescription()
-	{
+	public String getDescription() {
 		return this.description;
 	}
-	
+
 	/**
-	 * @param description Test description.
+	 * @param description
+	 *            Test description.
 	 */
-	public void setDescription( String description )
-	{
+	public void setDescription(String description) {
 		this.description = description;
 	}
-	
+
 	/**
 	 * @return Optional Directive.
 	 */
-	public Directive getDirective()
-	{
+	public Directive getDirective() {
 		return this.directive;
 	}
-	
+
 	/**
-	 * @param directive Optional Directive.
+	 * @param directive
+	 *            Optional Directive.
 	 */
-	public void setDirective( Directive directive )
-	{
+	public void setDirective(Directive directive) {
 		this.directive = directive;
 	}
-	
+
 	/**
 	 * @return The comment set for this Test Result.
 	 */
-	public Comment getComment()
-	{
+	public Comment getComment() {
 		return this.comment;
 	}
-	
+
 	/**
-	 * @param comment Comment.
+	 * @param comment
+	 *            Comment.
 	 */
-	public void setComment( Comment comment )
-	{
+	public void setComment(Comment comment) {
 		this.comment = comment;
-	}
-	
-	@Override
-	public String toString()
-	{
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append( status );
-		
-		Util.appendIfNotNull(sb, " ", testNumber, null);
-		Util.appendIfNotNull(sb, " ", description, null);
-		
-		Util.appendIfNotNull(sb, null, directive, null);
-		
-		Util.appendIfNotNull(sb, " ", comment, null);
-		
-		return sb.toString();
 	}
 
 }

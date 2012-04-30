@@ -21,33 +21,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.tap4j.parser;
+package org.tap4j.model;
 
-import org.tap4j.error.Mark;
-import org.tap4j.error.MarkedException;
+import java.util.Map;
 
 /**
+ * A TAP element with diagnostics.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 0.1
  */
-public class ParserException extends MarkedException {
-	private static final long serialVersionUID = -4881730537664138650L;
-	
+public interface TapDiagnosticableElement extends TapElement {
+
 	/**
-     * Constructs an instance.
-     * 
-     * @param context
-     *            Part of the input document in which vicinity the problem
-     *            occurred.
-     * @param contextMark
-     *            Position of the <code>context</code> within the document.
-     * @param problem
-     *            Part of the input document that caused the problem.
-     * @param problemMark
-     *            Position of the <code>problem</code>. within the document.
-     */
-    public ParserException(String context, Mark contextMark, String problem, Mark problemMark) {
-        super(context, contextMark, problem, problemMark, null, null);
-    }
+	 * @return yaml diagnostic information.
+	 */
+	Map<String, Object> getDiagnostic();
+
+	/**
+	 * @param meta
+	 *            yaml diagnostic information.
+	 */
+	void setDiagnostic(Map<String, Object> meta);
+	
 }

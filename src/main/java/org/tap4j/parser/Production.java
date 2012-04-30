@@ -23,31 +23,13 @@
  */
 package org.tap4j.parser;
 
-import org.tap4j.error.Mark;
-import org.tap4j.error.MarkedException;
+import org.tap4j.event.Event;
 
 /**
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 0.1
  */
-public class ParserException extends MarkedException {
-	private static final long serialVersionUID = -4881730537664138650L;
-	
-	/**
-     * Constructs an instance.
-     * 
-     * @param context
-     *            Part of the input document in which vicinity the problem
-     *            occurred.
-     * @param contextMark
-     *            Position of the <code>context</code> within the document.
-     * @param problem
-     *            Part of the input document that caused the problem.
-     * @param problemMark
-     *            Position of the <code>problem</code>. within the document.
-     */
-    public ParserException(String context, Mark contextMark, String problem, Mark problemMark) {
-        super(context, contextMark, problem, problemMark, null, null);
-    }
+public interface Production {
+	public Event produce();
 }

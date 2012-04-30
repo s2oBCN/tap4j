@@ -21,33 +21,68 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.tap4j.parser;
+package org.tap4j.event;
 
 import org.tap4j.error.Mark;
-import org.tap4j.error.MarkedException;
 
 /**
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
- * @since 0.1
+ * @since 3.0
  */
-public class ParserException extends MarkedException {
-	private static final long serialVersionUID = -4881730537664138650L;
+public abstract class Event {
+
+	public enum ID {
+		StreamStart, StreamEnd, DocumentStart, DocumentEnd
+	}
 	
-	/**
-     * Constructs an instance.
-     * 
-     * @param context
-     *            Part of the input document in which vicinity the problem
-     *            occurred.
-     * @param contextMark
-     *            Position of the <code>context</code> within the document.
-     * @param problem
-     *            Part of the input document that caused the problem.
-     * @param problemMark
-     *            Position of the <code>problem</code>. within the document.
-     */
-    public ParserException(String context, Mark contextMark, String problem, Mark problemMark) {
-        super(context, contextMark, problem, problemMark, null, null);
+	private final Mark startMark;
+    private final Mark endMark;
+
+    public Event(Mark startMark, Mark endMark) {
+        this.startMark = startMark;
+        this.endMark = endMark;
     }
+
+    public String toString() {
+        return "<" + this.getClass().getName() + "(" + getArguments() + ")>";
+    }
+
+    public Mark getStartMark() {
+        return startMark;
+    }
+
+    public Mark getEndMark() {
+        return endMark;
+    }
+
+    /**
+     * @see __repr__ for Event in PyYAML
+     */
+    protected String getArguments() {
+        return "";
+    }
+
+    public abstract boolean is(Event.ID id);
+
+    /*
+     * for tests only
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Event) {
+            return toString().equals(obj.toString());
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     * for tests only
+     */
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+	
 }

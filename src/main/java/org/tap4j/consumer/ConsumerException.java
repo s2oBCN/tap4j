@@ -1,7 +1,7 @@
-/*
+/* 
  * The MIT License
- *
- * Copyright (c) <2010> <tap4j>
+ * 
+ * Copyright (c) 2010 Bruno P. Kinoshita <http://www.kinoshita.eti.br>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,16 +21,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.tap4j.model;
+package org.tap4j.consumer;
 
-import java.io.Serializable;
+import org.tap4j.error.TapException;
 
 /**
- * A marker interface for TAP elements.
+ * This exception is thrown by the Tap Parser.
  * 
- * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
- * @since 1.0
+ * @author Bruno P. Kinoshita <http://www.kinoshita.eti.br>
+ * @since 20/09/2010
  */
-public interface TapElement extends Serializable {
+public class ConsumerException extends TapException {
+	private static final long serialVersionUID = 3707603673420544139L;
+
+	/**
+	 * Constructor with parameter.
+	 * 
+	 * @param message
+	 *            Exception message.
+	 */
+	public ConsumerException(String message) {
+		super(message);
+	}
+
+	/**
+	 * Constructor with parameter.
+	 * 
+	 * @param cause
+	 *            Exception cause.
+	 */
+	public ConsumerException(Throwable cause) {
+		super(cause);
+	}
+
+	/**
+	 * Constructor with paramters.
+	 * 
+	 * @param message
+	 *            Exception message.
+	 * @param cause
+	 *            Exception cause.
+	 */
+	public ConsumerException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
 }

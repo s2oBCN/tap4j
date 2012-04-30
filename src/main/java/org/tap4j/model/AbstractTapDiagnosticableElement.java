@@ -23,14 +23,38 @@
  */
 package org.tap4j.model;
 
-import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * A marker interface for TAP elements.
+ * TAP Element that supports diagnostic information.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public interface TapElement extends Serializable {
+public abstract class AbstractTapDiagnosticableElement implements TapDiagnosticableElement {
+	private static final long serialVersionUID = 8568950679698773071L;
+	/**
+	 * Iterable object returned by snakeyaml.
+	 */
+	protected Map<String, Object> diagnostic = new LinkedHashMap<String, Object>();
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.tap4j.model.TapElement#getDiagnostic()
+	 */
+	public Map<String, Object> getDiagnostic() {
+		return this.diagnostic;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.tap4j.model.TapElement#setDiagnostic(java.lang.Iterable)
+	 */
+	public void setDiagnostic(Map<String, Object> diagnostic) {
+		this.diagnostic = diagnostic;
+	}
 
 }

@@ -24,18 +24,16 @@
 package org.tap4j.model;
 
 /**
- * TAP Plan. The TAP Plan gives details about the execution of the tests such 
- * as initial test number, last test number, flag to skip all tests and 
- * a reason for this.
+ * TAP Plan. The TAP Plan gives details about the execution of the tests such as
+ * initial test number, last test number, flag to skip all tests and a reason
+ * for this.
  * 
  * @author Bruno P. Kinoshita - http://www.kinoshita.eti.br
  * @since 1.0
  */
-public class Plan 
-extends AbstractTapElementDiagnostic
-{
-	private static final long serialVersionUID = 1L;
-	
+public class Plan extends AbstractTapDiagnosticableElement {
+	private static final long serialVersionUID = 5369743016084298720L;
+
 	/**
 	 * Default initial test step.
 	 */
@@ -45,166 +43,150 @@ extends AbstractTapElementDiagnostic
 	 * TAP Plan initial test number.
 	 */
 	private Integer initialTestNumber;
-	
+
 	/**
 	 * TAP Plan last test number.
 	 */
 	private Integer lastTestNumber;
-	
+
 	/**
-	 * TAP Plan skip. If present the tests should not be executed.
+	 * TAP Plan skip. If <code>true</code> the tests should not be executed.
 	 */
-	private SkipPlan skip;
-	
+	private boolean skip;
+
+	/**
+	 * Reason to skip this plan.
+	 */
+	private String reason;
+
 	/**
 	 * A comment.
 	 */
 	private Comment comment;
-	
+
 	/**
 	 * Constructor with parameters.
 	 * 
-	 * @param initialTestNumber Initial test number (usually is 1).
-	 * @param lastTestNumber Last test number (may be 0 if to skip all tests).
+	 * @param initialTestNumber
+	 *            Initial test number (usually is 1).
+	 * @param lastTestNumber
+	 *            Last test number (may be 0 if to skip all tests).
 	 */
-	public Plan( Integer initialTestNumber, Integer lastTestNumber )
-	{
+	public Plan(Integer initialTestNumber, Integer lastTestNumber) {
 		super();
 		this.initialTestNumber = initialTestNumber;
 		this.lastTestNumber = lastTestNumber;
 	}
-	
+
 	/**
 	 * Constructor with parameters.
 	 * 
-	 * @param amountOfTests How many tests we have in the plan.
+	 * @param amountOfTests
+	 *            How many tests we have in the plan.
 	 */
-	public Plan( Integer amountOfTests )
-	{
+	public Plan(Integer amountOfTests) {
 		super();
 		this.initialTestNumber = INITIAL_TEST_STEP;
 		this.lastTestNumber = amountOfTests;
 	}
-	
+
 	/**
 	 * Constructor with parameters
 	 * 
- 	 * @param amountOfTests How many tests we have in the plan.
-	 * @param skip Plan skip with a reason.
+	 * @param amountOfTests
+	 *            How many tests we have in the plan.
+	 * @param skip
+	 *            Skip this plan
+	 * @param reason
+	 *            Reason to skip this plan
 	 */
-	public Plan(Integer amountOfTests, SkipPlan skip )
-	{
+	public Plan(Integer amountOfTests, boolean skip, String reason) {
 		super();
 		this.initialTestNumber = INITIAL_TEST_STEP;
 		this.lastTestNumber = amountOfTests;
 		this.skip = skip;
+		this.reason = reason;
 	}
-	
+
 	/**
 	 * Constructor with parameters
 	 * 
-	 * @param initialTestNumber Initial test number (usually is 1).
-	 * @param lastTestNumber Last test number (may be 0 if to skip all tests).
-	 * @param skip Plan skip with a reason.
+	 * @param initialTestNumber
+	 *            Initial test number (usually is 1).
+	 * @param lastTestNumber
+	 *            Last test number (may be 0 if to skip all tests).
+	 * @param skip
+	 *            Skip this plan
+	 * @param reason
+	 *            Reason to skip this plan
 	 */
-	public Plan( 
-			Integer initialTestNumber, 
-			Integer lastTestNumber, 
-			SkipPlan skip)
-	{
+	public Plan(Integer initialTestNumber, Integer lastTestNumber,
+			boolean skip, String reason) {
 		super();
 		this.initialTestNumber = initialTestNumber;
 		this.lastTestNumber = lastTestNumber;
 		this.skip = skip;
 	}
-	
+
 	/**
 	 * @return Initial test number.
 	 */
-	public Integer getInitialTestNumber()
-	{
+	public Integer getInitialTestNumber() {
 		return this.initialTestNumber;
 	}
-	
+
 	/**
 	 * @return Last test number.
 	 */
-	public Integer getLastTestNumber()
-	{
+	public Integer getLastTestNumber() {
 		return this.lastTestNumber;
 	}
-	
+
 	/**
 	 * @return Flag used to indicate whether skip all tests or not.
 	 */
-	public Boolean isSkip()
-	{
-		return this.skip != null;
-	}
-	
-	/**
-	 * @return Plan Skip with reason.
-	 */
-	public SkipPlan getSkip()
-	{
+	public Boolean isSkip() {
 		return this.skip;
 	}
-	
+
 	/**
 	 * Defines whether we should skip all tests or not.
 	 * 
-	 * @param skip Plan Skip. 
+	 * @param skip
 	 */
-	public void setSkip( SkipPlan skip )
-	{
+	public void setSkip(boolean skip) {
 		this.skip = skip;
+	}
+	
+	/**
+	 * @return the reason
+	 */
+	public String getReason() {
+		return reason;
+	}
+	
+	/**
+	 * @param reason the reason to set
+	 */
+	public void setReason(String reason) {
+		this.reason = reason;
 	}
 
 	/**
 	 * @return Optional Plan comment.
 	 */
-	public Comment getComment()
-	{
+	public Comment getComment() {
 		return this.comment;
 	}
-	
+
 	/**
 	 * Sets a comment into the Plan.
 	 * 
-	 * @param comment Plan comment.
+	 * @param comment
+	 *            Plan comment.
 	 */
-	public void setComment( Comment comment )
-	{
+	public void setComment(Comment comment) {
 		this.comment = comment;
 	}
-	
-	/**
-	 * <p>Returns the test plan as follows:</p>
-	 * 
-	 *  <p><i>&lt;initial test number&gt;..&lt;last test number&gt;
-	 *  SPACE["skip"]SPACE[&lt;reason&gt;]</i></p>
-	 * 
-	 */
-	@Override
-	public String toString()
-	{
-		StringBuilder sb = new StringBuilder();
-		sb.append( initialTestNumber );
-		sb.append( ".." );
-		sb.append( lastTestNumber);
-		if ( this.skip != null )
-		{
-			sb.append( " skip " );
-			sb.append( this.skip.getReason() );
-		}
-		
-		if ( this.comment != null )
-		{
-			sb.append( ' ' );
-			sb.append( this.comment.toString() );
-		}
-		
-		return sb.toString();
-	}
-	
+
 }
