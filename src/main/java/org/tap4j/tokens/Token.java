@@ -5,7 +5,7 @@ import org.tap4j.error.TAPException;
 
 public abstract class Token {
 	public enum ID {
-		TAPVersion, Plan, TestResult
+		Comment, LineBreak, Plan, StreamEnd, StreamStart, TAPVersion, TestResult, Unknown
 	}
 	
 	private final Mark startMark;

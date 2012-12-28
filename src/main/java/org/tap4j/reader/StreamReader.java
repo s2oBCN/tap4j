@@ -97,6 +97,43 @@ public class StreamReader {
 		return prefix;
 	}
 	
+	public String readLine() {
+		char ch = '\0';
+		int ff = 0;
+		StringBuilder buffer = new StringBuilder();
+		loop:
+		while (true) {
+			ch = peek(ff);
+            switch (ch) {
+            case '\0':
+            	break loop;
+            case '\r':
+            	break loop;
+            case '\n':
+            	break loop;
+            case '\u0085':
+            	break loop;
+            case '\u2028':
+            	break loop;
+            case '\u2029':
+            	break loop;
+        	default:
+        		buffer.append(peek(ff));
+        		ff++;
+        		break;
+            }
+		}
+		return buffer.toString();
+	}
+	
+	public String readLineForward() {
+		final String line = readLine();
+		this.pointer += line.length();
+		this.index += line.length();
+		this.column += line.length();
+		return line;
+	}
+	
 	private void update() {
 		if (!this.eof) {
 			this.buffer = buffer.substring(this.pointer);
