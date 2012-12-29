@@ -28,30 +28,31 @@ import org.tap4j.error.Mark;
 
 public class CommentToken extends Token {
 
-	private final String comment;
-	private final boolean inline;
-	
-	public CommentToken(String comment, Mark startMark, Mark endMark) {
-		this(comment, /*inline*/ false, startMark, endMark);
-	}
-	
-	public CommentToken(String comment, boolean inline, Mark startMark, Mark endMark) {
-		super(startMark, endMark);
-		this.comment = comment;
-		this.inline = inline;
-	}
+    private final String comment;
+    private final boolean inline;
 
-	public String getComment() {
-		return comment;
-	}
-	
-	public boolean isInline() {
-		return inline;
-	}
-	
-	@Override
-	public ID getTokenId() {
-		return ID.Comment;
-	}
+    public CommentToken(String comment, Mark startMark, Mark endMark) {
+        this(comment, /* inline */false, startMark, endMark);
+    }
+
+    public CommentToken(String comment, boolean inline, Mark startMark,
+            Mark endMark) {
+        super(startMark, endMark);
+        this.comment = comment;
+        this.inline = inline;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public boolean isInline() {
+        return inline;
+    }
+
+    @Override
+    public ID getTokenId() {
+        return ID.Comment;
+    }
 
 }

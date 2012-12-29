@@ -43,144 +43,145 @@ import org.tap4j.tokens.Token.ID;
 import org.tap4j.tokens.UnknownToken;
 
 public class ScannerImpl implements Scanner {
-	
-	private final StreamReader reader;
-	private List<Token> tokens;
-	//private Stack<Integer> indents;
-	
-	private boolean done = false;
-	//private int indent = -1;
-	//private int tokensTaken = 0;
-	
-	public ScannerImpl(StreamReader reader) {
-		this.reader = reader;
-		this.tokens = new ArrayList<Token>();
-		//this.indents = new Stack<Integer>();
-		fetchStreamStart();
-	}
 
-	public boolean checkToken(ID... choices) {
-		while (needMoreTokens()) {
-			fetchMoreTokens();
-		}
-		if (!this.tokens.isEmpty()) {
-			if (choices.length == 0) {
-				return true;
-			}
-			Token.ID first = this.tokens.get(0).getTokenId();
-			for (int i = 0; i < choices.length; i++) {
-				if (first == choices[i]) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+    private final StreamReader reader;
+    private List<Token> tokens;
+    // private Stack<Integer> indents;
 
-	public Token peekToken() {
-		while (needMoreTokens()) {
-			fetchMoreTokens();
-		}
-		return this.tokens.get(0);
-	}
+    private boolean done = false;
 
-	public Token getToken() {
-		if (!this.tokens.isEmpty()) {
-			//this.tokensTaken++;
-			return this.tokens.remove(0);
-		}
-		return null;
-	}
-	
-	private boolean needMoreTokens() {
-		if (this.done) {
-			return false;
-		}
-		if (this.tokens.isEmpty()) {
-			return true;
-		}
-		return false;
-	}
-	
-	/**
+    // private int indent = -1;
+    // private int tokensTaken = 0;
+
+    public ScannerImpl(StreamReader reader) {
+        this.reader = reader;
+        this.tokens = new ArrayList<Token>();
+        // this.indents = new Stack<Integer>();
+        fetchStreamStart();
+    }
+
+    public boolean checkToken( ID... choices ) {
+        while (needMoreTokens()) {
+            fetchMoreTokens();
+        }
+        if (!this.tokens.isEmpty()) {
+            if (choices.length == 0) {
+                return true;
+            }
+            Token.ID first = this.tokens.get(0).getTokenId();
+            for (int i = 0; i < choices.length; i++) {
+                if (first == choices[i]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Token peekToken() {
+        while (needMoreTokens()) {
+            fetchMoreTokens();
+        }
+        return this.tokens.get(0);
+    }
+
+    public Token getToken() {
+        if (!this.tokens.isEmpty()) {
+            // this.tokensTaken++;
+            return this.tokens.remove(0);
+        }
+        return null;
+    }
+
+    private boolean needMoreTokens() {
+        if (this.done) {
+            return false;
+        }
+        if (this.tokens.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Fetch one or more tokens from the StreamReader.
      */
-	private void fetchMoreTokens() {
-		scanToNextToken();
-		// unwindIndent(reader.getColumn());
-		// VERSION
-		String version = scanVersion();
-		if (version.length() > 0) {
-			fetchVersion(version);
-			return;
-		}
-		char ch = reader.peek();
-		switch (ch) {
-		case '\0':
-			// Is it the end of stream?
+    private void fetchMoreTokens() {
+        scanToNextToken();
+        // unwindIndent(reader.getColumn());
+        // VERSION
+        String version = scanVersion();
+        if (version.length() > 0) {
+            fetchVersion(version);
+            return;
+        }
+        char ch = reader.peek();
+        switch (ch) {
+        case '\0':
+            // Is it the end of stream?
             fetchStreamEnd();
             return;
-		case '#':
-			// a COMMENT.
-			fetchComment();
-			return;
-		}
-		// a PLAN.
-		if (scanPlan()) {
-			fetchPlan();
-			return;
-		}
-		// a TEST-RESULT.
-		if (scanTestResult()) {
-			fetchTestResult();
-			return;
-		}
-		// fetch an UNKNOWN token, but attach it to latest processed token 
-		// if possible. In some documentation and API's, this kind of token is 
-		// used as COMMENT too.
-		fetchUnkownToken();
-		return;
-	}
-	
-	// Fetchers.
+        case '#':
+            // a COMMENT.
+            fetchComment();
+            return;
+        }
+        // a PLAN.
+        if (scanPlan()) {
+            fetchPlan();
+            return;
+        }
+        // a TEST-RESULT.
+        if (scanTestResult()) {
+            fetchTestResult();
+            return;
+        }
+        // fetch an UNKNOWN token, but attach it to latest processed token
+        // if possible. In some documentation and API's, this kind of token is
+        // used as COMMENT too.
+        fetchUnkownToken();
+        // return; // already implicit
+    }
 
-	private void fetchComment() {
-		final String comment = reader.readLineForward().trim();
-		
-		// Add COMMENT.
-		Token token = this.fetchComment(comment);
-		this.tokens.add(token);
-	}
-	
-	private Token fetchComment(String comment) {
-		return fetchComment(comment, false);
-	}
-	
-	private Token fetchComment(String comment, boolean inline) {
-		Mark startMark = reader.getMark();
-		Mark endMark = reader.getMark();
-		return new CommentToken(comment, inline, startMark, endMark);
-	}
-	
-	private void fetchPlan() {
-		Mark startMark = reader.getMark();
-		final String plan = reader.readLineForward().trim();
-		Mark endMark = reader.getMark();
-		Pattern pattern = Pattern.compile("^(\\d*)\\.\\.(\\d*)$");
-		Matcher matcher = pattern.matcher(plan);
-		if (matcher.matches() && matcher.groupCount() == 2) {
-			int begin = Integer.parseInt(matcher.group(1));
-			int end = Integer.parseInt(matcher.group(2));
-			
-			// Add PLAN.
-			Token unknownToken = new PlanToken(begin, end, startMark, endMark);
-			this.tokens.add(unknownToken);
-		} else {
-			this.fetchUnkownToken(plan);
-		}
-	}
+    // Fetchers.
 
-	/**
+    private void fetchComment() {
+        final String comment = reader.readLineForward().trim();
+
+        // Add COMMENT.
+        Token token = this.fetchComment(comment);
+        this.tokens.add(token);
+    }
+
+    private Token fetchComment( String comment ) {
+        return fetchComment(comment, false);
+    }
+
+    private Token fetchComment( String comment, boolean inline ) {
+        Mark startMark = reader.getMark();
+        Mark endMark = reader.getMark();
+        return new CommentToken(comment, inline, startMark, endMark);
+    }
+
+    private void fetchPlan() {
+        Mark startMark = reader.getMark();
+        final String plan = reader.readLineForward().trim();
+        Mark endMark = reader.getMark();
+        Pattern pattern = Pattern.compile("^(\\d*)\\.\\.(\\d*)$");
+        Matcher matcher = pattern.matcher(plan);
+        if (matcher.matches() && matcher.groupCount() == 2) {
+            int begin = Integer.parseInt(matcher.group(1));
+            int end = Integer.parseInt(matcher.group(2));
+
+            // Add PLAN.
+            Token unknownToken = new PlanToken(begin, end, startMark, endMark);
+            this.tokens.add(unknownToken);
+        } else {
+            this.fetchUnkownToken(plan);
+        }
+    }
+
+    /**
      * We always add STREAM-START as the first token and STREAM-END as the last
      * token.
      */
@@ -207,68 +208,75 @@ public class ScannerImpl implements Scanner {
         // The stream is finished.
         this.done = true;
     }
-    
+
     private void fetchTestResult() {
-		String line = reader.readLineForward();
-		Pattern pattern = Pattern.compile("^(ok|not ok)\\s+(\\d*)\\s?(.*)?(#.*)?");
-		Matcher matcher = pattern.matcher(line);
-		if (matcher.matches() && matcher.groupCount() >= 2) {
-			Token testResultToken;
-			int groups = matcher.groupCount();
-			String statusText = matcher.group(1);
-			Status status = "ok".equals(statusText) ? Status.OK : Status.NOT_OK;
-			int number = Integer.parseInt(matcher.group(2));
-			Mark startMark = reader.getMark();
-			Mark endMark = reader.getMark();
-			switch (groups) {
-			case 2:
-				testResultToken = new TestResultToken(status, number, null, null, startMark, endMark);
-				break;
-			case 3:
-				testResultToken = new TestResultToken(status, number, matcher.group(3), null, startMark, endMark);
-				break;
-			case 4:
-				String comment = matcher.group(4);
-				Token commentToken = this.fetchComment(comment, /*inline*/true);
-				testResultToken = new TestResultToken(status, number, matcher.group(3), (CommentToken) commentToken, startMark, endMark);
-				break;
-			default: 
-				testResultToken = new UnknownToken(line, startMark, endMark);	
-			}
-			
-			// Add TEST-RESULT. 
-			this.tokens.add(testResultToken);
-		} else {
-			this.fetchUnkownToken(line);
-		}
-	}
-    
+        String line = reader.readLineForward();
+        Pattern pattern = Pattern
+                .compile("^(ok|not ok)\\s+(\\d*)\\s?(.*)?(#.*)?");
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.matches() && matcher.groupCount() >= 2) {
+            Token testResultToken;
+            int groups = matcher.groupCount();
+            String statusText = matcher.group(1);
+            Status status = "ok".equals(statusText) ? Status.OK : Status.NOT_OK;
+            int number = Integer.parseInt(matcher.group(2));
+            Mark startMark = reader.getMark();
+            Mark endMark = reader.getMark();
+            switch (groups) {
+            case 2:
+                testResultToken = new TestResultToken(status, number, null,
+                        null, startMark, endMark);
+                break;
+            case 3:
+                testResultToken = new TestResultToken(status, number,
+                        matcher.group(3), null, startMark, endMark);
+                break;
+            case 4:
+                String comment = matcher.group(4);
+                Token commentToken = this.fetchComment(comment, /* inline */
+                        true);
+                testResultToken = new TestResultToken(status, number,
+                        matcher.group(3), (CommentToken) commentToken,
+                        startMark, endMark);
+                break;
+            default:
+                testResultToken = new UnknownToken(line, startMark, endMark);
+            }
+
+            // Add TEST-RESULT.
+            this.tokens.add(testResultToken);
+        } else {
+            this.fetchUnkownToken(line);
+        }
+    }
+
     private void fetchUnkownToken() {
-		String line = reader.readLineForward();
-		this.fetchUnkownToken(line);
-	}
-    
-    private void fetchUnkownToken(String token) {
-		Mark startMark = reader.getMark();
-		Mark endMark = reader.getMark();
-		
-		// Add an UNKNOWN.
-		Token unknownToken = new UnknownToken(token, startMark, endMark);
-		this.tokens.add(unknownToken);
-	}
-    
-    private void fetchVersion(String version) {
-		// Read the token.
+        String line = reader.readLineForward();
+        this.fetchUnkownToken(line);
+    }
+
+    private void fetchUnkownToken( String token ) {
         Mark startMark = reader.getMark();
-        int versionNumber = Integer.parseInt(version.substring(version.lastIndexOf(' ')+1));
+        Mark endMark = reader.getMark();
+
+        // Add an UNKNOWN.
+        Token unknownToken = new UnknownToken(token, startMark, endMark);
+        this.tokens.add(unknownToken);
+    }
+
+    private void fetchVersion( String version ) {
+        // Read the token.
+        Mark startMark = reader.getMark();
+        int versionNumber = Integer.parseInt(version.substring(version
+                .lastIndexOf(' ') + 1));
         reader.forward(version.length());
-		Mark endMark = reader.getMark();
-		
-		// Add VERSION.
-		Token token = new VersionToken(versionNumber, startMark, endMark);
-		tokens.add(token);
-	}
-    
+        Mark endMark = reader.getMark();
+
+        // Add VERSION.
+        Token token = new VersionToken(versionNumber, startMark, endMark);
+        tokens.add(token);
+    }
+
     // Scanners.
 
     private String scanLineBreak() {
@@ -286,23 +294,23 @@ public class ScannerImpl implements Scanner {
         }
         return "";
     }
-    
+
     private boolean scanPlan() {
-		return reader.readLine().matches("^\\d*\\.\\.\\d*");
-	}
-    
+        return reader.readLine().matches("^\\d*\\.\\.\\d*");
+    }
+
     private boolean scanTestResult() {
-		String line = reader.readLine();
-		return line.matches("^(ok|not ok)\\s+\\d*.*");
-	}
-    
+        String line = reader.readLine();
+        return line.matches("^(ok|not ok)\\s+\\d*.*");
+    }
+
     private void scanToNextToken() {
-		// If there is a byte order mark (BOM) at the beginning of the stream,
+        // If there is a byte order mark (BOM) at the beginning of the stream,
         // forward past it.
         if (reader.getIndex() == 0 && reader.peek() == '\uFEFF') {
             reader.forward();
         }
-        
+
         boolean found = false;
         while (!found) {
             int ff = 0;
@@ -316,52 +324,49 @@ public class ScannerImpl implements Scanner {
             }
             // If we scanned a line break, then (depending on flow level),
             // simple keys may be allowed.
-            if (scanLineBreak().length() != 0) {// found a line-break
-                // TBD: do something with line break?
-            } else {
+            if (scanLineBreak().length() == 0) {// did not found a line-break
                 found = true;
             }
         }
-        //this.indent = reader.getIndex();
-	}
-    
+        // this.indent = reader.getIndex();
+    }
+
     private String scanVersion() {
         String line = reader.readLine();
         if (line.matches("^TAP\\s+version\\s+(\\d*)")) {
-        	return line;        	
+            return line;
         }
         return "";
     }
-    
-	public static void main(String[] args) {
-		Scanner scanner = new ScannerImpl(new StreamReader("TAP version 13\n" +
-				"1..10\n" +
-				"# eae, beleza??\n" +
-				"ok 1 what's up buddy? # a comment is always good, righto?\n\r\n" +
-				"not ok 2 - something's wrong here...\n" +
-				"ok 3    \n" +
-				"ok 4\n" +
-				"# comments are good\n" +
-				"not ok 5\n" +
-				"# something bad happened harry\n" +
-				"# IOException: java.util.....\n" +
-				"ok 6 - Ya-hoo! No regressions!\n" +
-				"not ok 7 #SKIP\r\n" +
-				"ok 8 #TODO not enough memory on this computer\n" +
-				"ok 8 Hey buddy\n" +
-				"not ok 9\r\n" +
-				"not ok 10    \n" +
-				"1..4\n" +
-				"done\n\n"));
-		Token token = null;
-		do {
-			token = scanner.getToken();
-			if(token != null) {
-				System.out.println(token);
-			}
-			token = scanner.peekToken();
-		} while (token != null && !(token instanceof StreamEndToken));
-		System.out.println(token);
-	}
-	
+
+    public static void main( String[] args ) {
+        Scanner scanner = new ScannerImpl(
+                new StreamReader(
+                        "TAP version 13\n"
+                                + "1..10\n"
+                                + "# eae, beleza??\n"
+                                + "ok 1 what's up buddy? # a comment is always good, righto?\n\r\n"
+                                + "not ok 2 - something's wrong here...\n"
+                                + "ok 3    \n"
+                                + "ok 4\n"
+                                + "# comments are good\n"
+                                + "not ok 5\n"
+                                + "# something bad happened harry\n"
+                                + "# IOException: java.util.....\n"
+                                + "ok 6 - Ya-hoo! No regressions!\n"
+                                + "not ok 7 #SKIP\r\n"
+                                + "ok 8 #TODO not enough memory on this computer\n"
+                                + "ok 8 Hey buddy\n" + "not ok 9\r\n"
+                                + "not ok 10    \n" + "1..4\n" + "done\n\n"));
+        Token token = null;
+        do {
+            token = scanner.getToken();
+            if (token != null) {
+                System.out.println(token);
+            }
+            token = scanner.peekToken();
+        } while (token != null && !(token instanceof StreamEndToken));
+        System.out.println(token);
+    }
+
 }

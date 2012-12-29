@@ -27,42 +27,43 @@ package org.tap4j.tokens;
 import org.tap4j.error.Mark;
 
 public class TestResultToken extends Token {
-	public enum Status {
-		OK, NOT_OK
-	}
+    public enum Status {
+        OK, NOT_OK
+    }
 
-	private final Status status;
-	private final int number;
-	private final String description;
-	private final CommentToken comment;
-	
-	public TestResultToken(Status status, int number, String description, CommentToken comment, Mark startMark, Mark endMark) {
-		super(startMark, endMark);
-		this.status = status;
-		this.number = number;
-		this.description = description;
-		this.comment = comment;
-	}
-	
-	public Status getStatus() {
-		return status;
-	}
-	
-	public int getNumber() {
-		return number;
-	}
-	
-	public String getDescription() {
-		return description;
-	}
-	
-	public CommentToken getComment() {
-		return comment;
-	}
+    private final Status status;
+    private final int number;
+    private final String description;
+    private final CommentToken comment;
 
-	@Override
-	public ID getTokenId() {
-		return ID.TestResult;
-	}
+    public TestResultToken(Status status, int number, String description,
+            CommentToken comment, Mark startMark, Mark endMark) {
+        super(startMark, endMark);
+        this.status = status;
+        this.number = number;
+        this.description = description;
+        this.comment = comment;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public CommentToken getComment() {
+        return comment;
+    }
+
+    @Override
+    public ID getTokenId() {
+        return ID.TestResult;
+    }
 
 }

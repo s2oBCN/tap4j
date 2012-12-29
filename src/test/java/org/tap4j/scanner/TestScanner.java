@@ -22,26 +22,18 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.tokens;
+package org.tap4j.scanner;
 
-import org.tap4j.error.Mark;
+import org.junit.Test;
 
-public class VersionToken extends Token {
+/**
+ * Tests for scanners.
+ */
+public class TestScanner {
 
-    private final int version;
-
-    public VersionToken(int version, Mark startMark, Mark endMark) {
-        super(startMark, endMark);
-        this.version = version;
-    }
-
-    @Override
-    public ID getTokenId() {
-        return ID.TAPVersion;
-    }
-
-    public int getVersion() {
-        return version;
+    @Test
+    public void testA() {
+        System.out.println("testA()");
     }
 
 }

@@ -28,14 +28,14 @@ import java.util.Arrays;
 
 public class Constant {
 
-	private final static String LINEBR_S = "\n\u0085\u2028\u2029";
-	private final static String FULL_LINEBR_S = "\r" + LINEBR_S;
-	private final static String NULL_OR_LINEBR_S = "\0" + FULL_LINEBR_S;
-    
-	public final static Constant LINEBR = new Constant(LINEBR_S);
-	public final static Constant NULL_OR_LINEBR = new Constant(NULL_OR_LINEBR_S);
-	
-	private String content;
+    private final static String LINEBR_S = "\n\u0085\u2028\u2029";
+    private final static String FULL_LINEBR_S = "\r" + LINEBR_S;
+    private final static String NULL_OR_LINEBR_S = "\0" + FULL_LINEBR_S;
+
+    public final static Constant LINEBR = new Constant(LINEBR_S);
+    public final static Constant NULL_OR_LINEBR = new Constant(NULL_OR_LINEBR_S);
+
+    private String content;
     boolean[] contains = new boolean[128];
     boolean noASCII = false;
 
@@ -54,20 +54,21 @@ public class Constant {
             this.content = sb.toString();
         }
     }
-    
-    public boolean has(char ch) {
-        return (ch < 128) ? contains[ch] : noASCII && content.indexOf(ch, 0) != -1;
+
+    public boolean has( char ch ) {
+        return (ch < 128) ? contains[ch] : noASCII
+                && content.indexOf(ch, 0) != -1;
     }
 
-    public boolean hasNo(char ch) {
+    public boolean hasNo( char ch ) {
         return !has(ch);
     }
 
-    public boolean has(char ch, String additional) {
+    public boolean has( char ch, String additional ) {
         return has(ch) || additional.indexOf(ch, 0) != -1;
     }
 
-    public boolean hasNo(char ch, String additional) {
+    public boolean hasNo( char ch, String additional ) {
         return !has(ch, additional);
     }
 }
