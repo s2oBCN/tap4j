@@ -33,13 +33,13 @@ public class MarkedTAPException extends TAPException {
     private Mark problemMark;
     private String note;
 
-    protected MarkedTAPException(String context, Mark contextMark, String problem,
-            Mark problemMark, String note) {
+    protected MarkedTAPException(String context, Mark contextMark,
+            String problem, Mark problemMark, String note) {
         this(context, contextMark, problem, problemMark, note, null);
     }
 
-    protected MarkedTAPException(String context, Mark contextMark, String problem,
-            Mark problemMark, String note, Throwable cause) {
+    protected MarkedTAPException(String context, Mark contextMark,
+            String problem, Mark problemMark, String note, Throwable cause) {
         super(context + "; " + problem + "; " + problemMark, cause);
         this.context = context;
         this.contextMark = contextMark;
@@ -48,12 +48,13 @@ public class MarkedTAPException extends TAPException {
         this.note = note;
     }
 
-    protected MarkedTAPException(String context, Mark contextMark, String problem, Mark problemMark) {
+    protected MarkedTAPException(String context, Mark contextMark,
+            String problem, Mark problemMark) {
         this(context, contextMark, problem, problemMark, null, null);
     }
 
-    protected MarkedTAPException(String context, Mark contextMark, String problem,
-            Mark problemMark, Throwable cause) {
+    protected MarkedTAPException(String context, Mark contextMark,
+            String problem, Mark problemMark, Throwable cause) {
         this(context, contextMark, problem, problemMark, null, cause);
     }
 
@@ -65,7 +66,8 @@ public class MarkedTAPException extends TAPException {
             lines.append("\n");
         }
         if (contextMark != null
-                && (problem == null || problemMark == null
+                && (problem == null
+                        || problemMark == null
                         || (contextMark.getName().equals(problemMark.getName()))
                         || (contextMark.getLine() != problemMark.getLine()) || (contextMark
                         .getColumn() != problemMark.getColumn()))) {

@@ -34,8 +34,8 @@ public enum TapVersionValues {
     /*
      * Valid values.
      */
-    TAP_1(1), TAP_2(2), TAP_3(3), TAP_4(4), TAP_5(5), TAP_6(6), TAP_7(7),
-    TAP_8(8), TAP_9(9), TAP_10(10), TAP_11(11), TAP_12(12), TAP_13(13);
+    TAP_1(1), TAP_2(2), TAP_3(3), TAP_4(4), TAP_5(5), TAP_6(6), TAP_7(7), TAP_8(
+            8), TAP_9(9), TAP_10(10), TAP_11(11), TAP_12(12), TAP_13(13);
 
     /**
      * The TAP version.
@@ -62,6 +62,7 @@ public enum TapVersionValues {
 
     /*
      * (non-Javadoc)
+     * 
      * @see java.lang.Enum#toString()
      */
     @Override

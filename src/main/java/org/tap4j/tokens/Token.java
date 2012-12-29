@@ -58,7 +58,7 @@ public abstract class Token {
     public abstract Token.ID getTokenId();
 
     @Override
-    public boolean equals( Object obj ) {
+    public boolean equals(Object obj) {
         if (obj instanceof Token) {
             return toString().equals(obj.toString());
         }

@@ -61,11 +61,11 @@ public final class Mark {
         return index;
     }
 
-    private boolean isLineBreak( char ch ) {
+    private boolean isLineBreak(char ch) {
         return Constant.NULL_OR_LINEBR.has(ch);
     }
 
-    public String getSnippet( int indent, int maxLength ) {
+    public String getSnippet(int indent, int maxLength) {
         if (buffer == null) {
             return null;
         }

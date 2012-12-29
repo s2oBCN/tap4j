@@ -31,7 +31,7 @@ package org.tap4j.model;
  * @since 1.0
  */
 public enum StatusValues {
-    
+
     /*
      * Valid values.
      */
@@ -53,11 +53,12 @@ public enum StatusValues {
 
     /*
      * (non-Javadoc)
+     * 
      * @see java.lang.Enum#toString()
      */
     @Override
     public String toString() {
         return this.textValue;
     }
-    
+
 }

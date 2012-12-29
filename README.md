@@ -3,6 +3,10 @@
 tap4j - Simple implementation of the 
 [Test Anything Protocol](http://www.testanything.org) (TAP) for Java.
 
+tap4j was created in 2010 with the intention of implementing a producer and a 
+consumer for TAP in Java. In 2012 it was rewritten, using SnakeYAML as 
+reference. 
+
     1..2
     not ok 1 - Something went wrong
       ---
@@ -16,6 +20,8 @@ tap4j - Simple implementation of the
             File-Name: apache.err.log
       ...
     ok 2 # SKIP skipping due to previous errors
+
+# Test Anything Protocol
 
 TAP is a test protocol that can be used to report test execution. It has been 
 created with Perl 1, around 1988, and is the main format in Perl. A test 

@@ -28,7 +28,7 @@ import org.tap4j.tokens.Token;
 
 public interface Scanner {
 
-    boolean checkToken( Token.ID... choices );
+    boolean checkToken(Token.ID... choices);
 
     Token peekToken();
 

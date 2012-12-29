@@ -28,7 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * TAP Element that supports diagnostic information. The diagnostics is a map 
+ * TAP Element that supports diagnostic information. The diagnostics is a map
  * containing the YAMLish extra information of a test.
  * 
  * @since 1.0
@@ -47,6 +47,7 @@ public abstract class AbstractTapElementDiagnostic implements TapElement {
 
     /*
      * (non-Javadoc)
+     * 
      * @see org.tap4j.model.TapElement#getDiagnostic()
      */
     public Map<String, Object> getDiagnostic() {
@@ -55,6 +56,7 @@ public abstract class AbstractTapElementDiagnostic implements TapElement {
 
     /*
      * (non-Javadoc)
+     * 
      * @see org.tap4j.model.TapElement#setDiagnostic(java.lang.Iterable)
      */
     public void setDiagnostic(Map<String, Object> diagnostic) {

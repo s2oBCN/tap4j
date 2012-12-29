@@ -32,7 +32,7 @@ package org.tap4j.model;
  * @since 1.0
  */
 public enum DirectiveValues {
-    
+
     /*
      * Valid values.
      */
@@ -54,6 +54,7 @@ public enum DirectiveValues {
 
     /*
      * (non-Javadoc)
+     * 
      * @see java.lang.Enum#toString()
      */
     @Override

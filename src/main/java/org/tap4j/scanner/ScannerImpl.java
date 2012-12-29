@@ -60,7 +60,7 @@ public class ScannerImpl implements Scanner {
         fetchStreamStart();
     }
 
-    public boolean checkToken( ID... choices ) {
+    public boolean checkToken(ID... choices) {
         while (needMoreTokens()) {
             fetchMoreTokens();
         }
@@ -153,11 +153,11 @@ public class ScannerImpl implements Scanner {
         this.tokens.add(token);
     }
 
-    private Token fetchComment( String comment ) {
+    private Token fetchComment(String comment) {
         return fetchComment(comment, false);
     }
 
-    private Token fetchComment( String comment, boolean inline ) {
+    private Token fetchComment(String comment, boolean inline) {
         Mark startMark = reader.getMark();
         Mark endMark = reader.getMark();
         return new CommentToken(comment, inline, startMark, endMark);
@@ -255,7 +255,7 @@ public class ScannerImpl implements Scanner {
         this.fetchUnkownToken(line);
     }
 
-    private void fetchUnkownToken( String token ) {
+    private void fetchUnkownToken(String token) {
         Mark startMark = reader.getMark();
         Mark endMark = reader.getMark();
 
@@ -264,7 +264,7 @@ public class ScannerImpl implements Scanner {
         this.tokens.add(unknownToken);
     }
 
-    private void fetchVersion( String version ) {
+    private void fetchVersion(String version) {
         // Read the token.
         Mark startMark = reader.getMark();
         int versionNumber = Integer.parseInt(version.substring(version
@@ -339,7 +339,7 @@ public class ScannerImpl implements Scanner {
         return "";
     }
 
-    public static void main( String[] args ) {
+    public static void main(String[] args) {
         Scanner scanner = new ScannerImpl(
                 new StreamReader(
                         "TAP version 13\n"

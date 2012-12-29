@@ -125,7 +125,7 @@ public class TestSet implements Serializable {
     public List<TestResult> getTestResults() {
         return this.testResults;
     }
-    
+
     /**
      * @return Next test number.
      */
@@ -166,8 +166,8 @@ public class TestSet implements Serializable {
      * @return Whether could add to TestResult list or not.
      */
     public boolean addTestResult(TestResult testResult) {
-        if (testResult.getTestNumber() == null ||
-            testResult.getTestNumber() <= 0) {
+        if (testResult.getTestNumber() == null
+                || testResult.getTestNumber() <= 0) {
             testResult.setTestNumber(this.testResults.size() + 1);
         }
         this.testResults.add(testResult);
@@ -307,6 +307,7 @@ public class TestSet implements Serializable {
 
     /*
      * (non-Javadoc)
+     * 
      * @see org.tap4j.TapConsumer#containsOk()
      */
     public Boolean containsOk() {
@@ -324,6 +325,7 @@ public class TestSet implements Serializable {
 
     /*
      * (non-Javadoc)
+     * 
      * @see org.tap4j.TapConsumer#containsNotOk()
      */
     public Boolean containsNotOk() {
@@ -341,6 +343,7 @@ public class TestSet implements Serializable {
 
     /*
      * (non-Javadoc)
+     * 
      * @see org.tap4j.TapConsumer#containsBailOut()
      */
     public Boolean containsBailOut() {
@@ -349,14 +352,15 @@ public class TestSet implements Serializable {
 
     /*
      * (non-Javadoc)
+     * 
      * @see org.tap4j.TapConsumer#getTestResult(java.lang.Integer)
      */
     public TestResult getTestResult(Integer testNumber) {
         TestResult foundTestResult = null;
 
         for (TestResult testResult : this.testResults) {
-            if (testResult.getTestNumber() != null &&
-                testResult.getTestNumber().equals(testNumber)) {
+            if (testResult.getTestNumber() != null
+                    && testResult.getTestNumber().equals(testNumber)) {
                 foundTestResult = testResult;
                 break;
             }

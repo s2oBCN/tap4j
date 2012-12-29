@@ -75,7 +75,7 @@ public class StreamReader {
      * 
      * @param length
      */
-    public void forward( int length ) {
+    public void forward(int length) {
         if (this.pointer + length + 1 >= this.buffer.length()) {
             update();
         }
@@ -98,14 +98,14 @@ public class StreamReader {
         return this.buffer.charAt(this.pointer);
     }
 
-    public char peek( int index ) {
+    public char peek(int index) {
         if (this.pointer + index + 1 > this.buffer.length()) {
             update();
         }
         return this.buffer.charAt(this.pointer + index);
     }
 
-    public String prefix( int length ) {
+    public String prefix(int length) {
         if (this.pointer + length >= this.buffer.length()) {
             update();
         }
@@ -115,7 +115,7 @@ public class StreamReader {
         return this.buffer.substring(this.pointer, this.pointer + length);
     }
 
-    public String prefixForward( int length ) {
+    public String prefixForward(int length) {
         final String prefix = prefix(length);
         this.pointer += length;
         this.index += length;
