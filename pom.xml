@@ -1,6 +1,279 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.tap4j</groupId>
-  <artifactId>tap4j2</artifactId>
-  <version>0.1-SNAPSHOT</version>
+    
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.tap4j</groupId>
+    <artifactId>tap4j</artifactId>
+    <version>4.0-SNAPSHOT</version>
+    
+    <name>tap4j - Test Anything Protocol for Java</name>
+    <description>TAP implementation for Java.</description>
+    
+    <!-- to release to Maven central repository -->
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+    
+    <inceptionYear>2010</inceptionYear>
+    
+    <organization>
+        <name>TupiLabs</name>
+        <url>http://www.tupilabs.com</url>
+    </organization>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    
+    <url>http://www.tap4j.org</url>
+    
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    
+    <scm>
+        <connection>scm:git:git://github.com/tupilabs/tap4j.git</connection>
+        <developerConnection>scm:git:git@github.com:tupilabs/tap4j.git</developerConnection>
+        <url>https://github.com/tupilabs/tap4j</url>
+    </scm>
+    
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/tupilabs/tap4j/issues</url>
+    </issueManagement>
+    
+    <ciManagement>
+        <system>Jenkins</system>
+        <url>https://buildhive.cloudbees.com/job/tupilabs/job/tap4j/</url>
+    </ciManagement>
+    
+    <developers>
+        <developer>
+            <email>brunodepaulak@yahoo.com.br</email>
+            <id>kinow</id>
+            <name>Bruno P. Kinoshita</name>
+            <timezone>-3</timezone>
+            <url>http://www.kinoshita.eti.br</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <email>cesar.fa@gmail.com</email>
+            <id>cesar1983</id>
+            <name>Cesar Fernandes de Almeida</name>
+            <timezone>-3</timezone>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
+    
+    <contributors>
+        <contributor>
+            <email>patl@cpan.org</email>
+            <name>Patrick LeBoutillier</name>
+            <timezone>0</timezone>
+            <roles>
+                <role>contributor</role>
+            </roles>
+        </contributor>
+    </contributors>
+    
+    <!-- project dependencies -->
+    <dependencies>
+        <!-- testing -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <!-- project build -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- http://maven.apache.org/plugins/maven-compiler-plugin/ -->
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <doclet>gr.spinellis.umlgraph.doclet.UmlGraphDoc</doclet>
+                    <docletArtifact>
+                        <groupId>gr.spinellis</groupId>
+                        <artifactId>UmlGraph</artifactId>
+                        <version>4.4</version>
+                    </docletArtifact>
+                    <additionalparam>
+                        -inferrel -inferdep -quiet -hide java.*
+                        -collpackages java.util.* -qualify
+                        -postfixpackage -nodefontsize 9
+                        -nodefontpackagesize 7
+                        -edgefontname "Trebuchet MS"
+                        -nodefontabstractname "Trebuchet MS"
+                        -nodefontclassabstractname
+                        "Trebuchet MS"
+                        -nodefontclassname "Trebuchet MS"
+                        -nodefontname
+                        "Trebuchet MS"
+                        -nodefontpackagename "Trebuchet MS"
+                        -nodefonttagname
+                        "Trebuchet MS" 
+                    </additionalparam>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>test-output</directory>
+                            <directory>tap</directory>
+                            <directory>bin</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <instrumentation>
+                        <ignores>
+                            <ignore>org.tap4j.ext.*</ignore>
+                        </ignores>
+                        <excludes>
+                            <exclude>org/tap4j/ext/**/*.class</exclude>
+                        </excludes>
+                    </instrumentation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.doxia</groupId>
+                        <artifactId>doxia-module-twiki</artifactId>
+                        <version>1.1.4</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <reportPlugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-project-info-reports-plugin</artifactId>
+                            <version>2.4</version>
+                            <reportSets>
+                                <reportSet>
+                                    <reports>
+                                        <report>dependencies</report>
+                                        <report>project-team</report>
+                                        <report>mailing-list</report>
+                                        <report>cim</report>
+                                        <report>issue-tracking</report>
+                                        <report>license</report>
+                                        <report>scm</report>
+                                    </reports>
+                                </reportSet>
+                            </reportSets>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-jxr-plugin</artifactId>
+                            <version>2.1</version>
+                            <configuration>
+                                <aggregate>true</aggregate>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <version>2.7</version>
+                            <configuration>
+                                <doclet>gr.spinellis.umlgraph.doclet.UmlGraphDoc</doclet>
+                                <docletArtifact>
+                                    <groupId>gr.spinellis</groupId>
+                                    <artifactId>UmlGraph</artifactId>
+                                    <version>4.4</version>
+                                </docletArtifact>
+                                <additionalparam>
+                                    -inferrel -inferdep -quiet -hide java.*
+                                    -collpackages java.util.* -qualify
+                                    -postfixpackage -nodefontsize
+                                    9
+                                    -nodefontpackagesize 7
+                                    -edgefontname "Trebuchet MS"
+                                    -nodefontabstractname "Trebuchet MS"
+                                    -nodefontclassabstractname
+                                    "Trebuchet MS"
+                                    -nodefontclassname "Trebuchet MS"
+                                    -nodefontname
+                                    "Trebuchet MS"
+                                    -nodefontpackagename "Trebuchet MS"
+                                    -nodefonttagname
+                                    "Trebuchet MS" 
+                               </additionalparam>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-report-plugin</artifactId>
+                            <version>2.8</version>
+                            <configuration>
+                                <excludes>
+                                    <exclude>**/TestNGIntegration.java</exclude>
+                                    <exclude>**/TestNGIntegration2.java</exclude>
+                                    <exclude>**/TestPerlIntegration.java</exclude>
+                                </excludes>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-pmd-plugin</artifactId>
+                            <configuration>
+                                <targetJdk>1.5</targetJdk>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>cobertura-maven-plugin</artifactId>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-changes-plugin</artifactId>
+                            <version>2.6</version>
+                            <reportSets>
+                                <reportSet>
+                                    <reports>
+                                        <report>changes-report</report>
+                                    </reports>
+                                </reportSet>
+                            </reportSets>
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
 </project>
