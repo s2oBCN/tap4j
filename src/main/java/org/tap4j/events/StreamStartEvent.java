@@ -22,48 +22,33 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.parser;
+package org.tap4j.events;
 
-import org.tap4j.events.Event;
+import org.tap4j.error.Mark;
 
 /**
- * This interface represents an input stream of {@link Event events}.
+ * Marks the start of a stream that might contain multiple documents.
  * <p>
- * The parser and the scanner form together the 'Parse' step in the loading
- * process.
- * </p>
+ * This event is the first event that a parser emits. Together with
+ * {@link StreamEndEvent} (which is the last event a parser emits) they mark the
+ * beginning and the end of a stream of documents.
  */
-public interface Parser {
+public class StreamStartEvent extends Event {
 
     /**
-     * Check if the next event is one of the given type.
-     * 
-     * @param choice Event ID.
-     * @return <code>true</code> if the next event can be assigned to a variable
-     *         of the given type. Returns <code>false</code> if no more events
-     *         are available.
-     * @throws ParseException Throws in case of malformed input.
+     * @param startMark
+     * @param endMark
      */
-    public boolean checkEvent(Event.ID choice);
+    public StreamStartEvent(Mark startMark, Mark endMark) {
+        super(startMark, endMark);
+    }
 
-    /**
-     * Return the next event, but do not delete it from the stream.
-     * 
-     * @return The event that will be returned on the next call to
-     *         {@link #getEvent()}.
-     * @throws ParseException Throws in case of malformed input.
+    /* (non-Javadoc)
+     * @see org.tap4j.events.Event#is(org.tap4j.events.Event.ID)
      */
-    public Event peekEvent();
-
-    /**
-     * Return the next event.
-     * <p>
-     * The event will be removed from the stream.
-     * </p>
-     * 
-     * @return The next event.
-     * @throws ParseException Throws in case of malformed input.
-     */
-    public Event getEvent();
+    @Override
+    public boolean is(ID id) {
+        return ID.StreamStart == id;
+    }
 
 }

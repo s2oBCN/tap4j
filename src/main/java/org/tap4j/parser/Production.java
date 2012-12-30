@@ -22,8 +22,16 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j;
+package org.tap4j.parser;
 
-public class TAP13 {
+import org.tap4j.events.Event;
 
+/**
+ * Helper for {@link ParserImpl}. A grammar rule to apply given the symbols on
+ * top of its stack and the next input token
+ * 
+ * @see http://en.wikipedia.org/wiki/LL_parser
+ */
+interface Production {
+    public Event produce();
 }

@@ -24,46 +24,29 @@
 
 package org.tap4j.parser;
 
-import org.tap4j.events.Event;
+import org.tap4j.error.Mark;
+import org.tap4j.error.MarkedTAPException;
 
 /**
- * This interface represents an input stream of {@link Event events}.
- * <p>
- * The parser and the scanner form together the 'Parse' step in the loading
- * process.
- * </p>
+ * Exception thrown by the {@link Parser} implementations in case of malformed
+ * input.
  */
-public interface Parser {
+public class ParserException extends MarkedTAPException {
+    private static final long serialVersionUID = 6561534175431110357L;
 
     /**
-     * Check if the next event is one of the given type.
+     * Constructs an instance.
      * 
-     * @param choice Event ID.
-     * @return <code>true</code> if the next event can be assigned to a variable
-     *         of the given type. Returns <code>false</code> if no more events
-     *         are available.
-     * @throws ParseException Throws in case of malformed input.
+     * @param context Part of the input document in which vicinity the problem
+     *            occurred.
+     * @param contextMark Position of the <code>context</code> within the
+     *            document.
+     * @param problem Part of the input document that caused the problem.
+     * @param problemMark Position of the <code>problem</code>. within the
+     *            document.
      */
-    public boolean checkEvent(Event.ID choice);
-
-    /**
-     * Return the next event, but do not delete it from the stream.
-     * 
-     * @return The event that will be returned on the next call to
-     *         {@link #getEvent()}.
-     * @throws ParseException Throws in case of malformed input.
-     */
-    public Event peekEvent();
-
-    /**
-     * Return the next event.
-     * <p>
-     * The event will be removed from the stream.
-     * </p>
-     * 
-     * @return The next event.
-     * @throws ParseException Throws in case of malformed input.
-     */
-    public Event getEvent();
-
+    public ParserException(String context, Mark contextMark, String problem,
+            Mark problemMark) {
+        super(context, contextMark, problem, problemMark, null, null);
+    }
 }

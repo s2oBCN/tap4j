@@ -22,48 +22,35 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.parser;
+package org.tap4j.consumer;
 
-import org.tap4j.events.Event;
+import java.io.File;
+
+import org.tap4j.error.TAPException;
+import org.tap4j.model.TestSet;
 
 /**
- * This interface represents an input stream of {@link Event events}.
- * <p>
- * The parser and the scanner form together the 'Parse' step in the loading
- * process.
- * </p>
+ * A TAP consumer. Responsible for consuming a TAP stream and producing a Test
+ * Set.
  */
-public interface Parser {
+public interface Consumer {
 
     /**
-     * Check if the next event is one of the given type.
+     * Consume a TAP File.
      * 
-     * @param choice Event ID.
-     * @return <code>true</code> if the next event can be assigned to a variable
-     *         of the given type. Returns <code>false</code> if no more events
-     *         are available.
-     * @throws ParseException Throws in case of malformed input.
+     * @param file TAP File.
+     * @return TestSet
+     * @throws TAPException
      */
-    public boolean checkEvent(Event.ID choice);
+    TestSet load(File file) throws TAPException;
 
     /**
-     * Return the next event, but do not delete it from the stream.
+     * Consume a TAP Stream.
      * 
-     * @return The event that will be returned on the next call to
-     *         {@link #getEvent()}.
-     * @throws ParseException Throws in case of malformed input.
+     * @param tapStream TAP Stream
+     * @return TestSet
+     * @throws TAPException
      */
-    public Event peekEvent();
-
-    /**
-     * Return the next event.
-     * <p>
-     * The event will be removed from the stream.
-     * </p>
-     * 
-     * @return The next event.
-     * @throws ParseException Throws in case of malformed input.
-     */
-    public Event getEvent();
+    TestSet load(String tapStream) throws TAPException;
 
 }
