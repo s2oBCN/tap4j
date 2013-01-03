@@ -32,7 +32,7 @@ import org.tap4j.error.Mark;
  */
 public abstract class Event {
     public enum ID {
-        StreamEnd, StreamStart
+        Plan, StreamEnd, StreamStart, TestResult, Version
     }
     
     private final Mark startMark;

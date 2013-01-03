@@ -22,16 +22,41 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.scanner;
+package org.tap4j.tokens;
 
-import org.tap4j.tokens.AbstractToken;
+public class Todo {
 
-public interface Scanner {
+    private final String description;
 
-    boolean checkToken(AbstractToken.ID... choices);
+    /**
+     * 
+     */
+    public Todo() {
+        super();
+        this.description = "";
+    }
+    
+    /**
+     * @param description
+     */
+    public Todo(String description) {
+        super();
+        this.description = description;
+    }
 
-    AbstractToken peekToken();
-
-    AbstractToken getToken();
-
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return this.getDescription();
+    }
+    
 }

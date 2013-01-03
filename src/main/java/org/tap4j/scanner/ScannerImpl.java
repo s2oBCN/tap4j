@@ -31,23 +31,25 @@ import java.util.regex.Pattern;
 
 import org.tap4j.error.Mark;
 import org.tap4j.reader.StreamReader;
-import org.tap4j.tokens.CommentToken;
+import org.tap4j.tokens.AbstractToken;
+import org.tap4j.tokens.AbstractToken.ID;
+import org.tap4j.tokens.CommentableToken;
+import org.tap4j.tokens.DiagnosticableToken;
 import org.tap4j.tokens.PlanToken;
+import org.tap4j.tokens.Skip;
 import org.tap4j.tokens.StreamEndToken;
 import org.tap4j.tokens.StreamStartToken;
-import org.tap4j.tokens.VersionToken;
 import org.tap4j.tokens.TestResultToken;
 import org.tap4j.tokens.TestResultToken.Status;
-import org.tap4j.tokens.Token;
-import org.tap4j.tokens.Token.ID;
-import org.tap4j.tokens.UnknownToken;
+import org.tap4j.tokens.Todo;
+import org.tap4j.tokens.VersionToken;
 
 public class ScannerImpl implements Scanner {
 
     private final StreamReader reader;
-    private List<Token> tokens;
+    private List<AbstractToken> tokens;
     // private Stack<Integer> indents;
-
+    private AbstractToken latestToken = null;
     private boolean done = false;
 
     // private int indent = -1;
@@ -55,7 +57,7 @@ public class ScannerImpl implements Scanner {
 
     public ScannerImpl(StreamReader reader) {
         this.reader = reader;
-        this.tokens = new ArrayList<Token>();
+        this.tokens = new ArrayList<AbstractToken>();
         // this.indents = new Stack<Integer>();
         fetchStreamStart();
     }
@@ -68,7 +70,7 @@ public class ScannerImpl implements Scanner {
             if (choices.length == 0) {
                 return true;
             }
-            Token.ID first = this.tokens.get(0).getTokenId();
+            AbstractToken.ID first = this.tokens.get(0).getTokenId();
             for (int i = 0; i < choices.length; i++) {
                 if (first == choices[i]) {
                     return true;
@@ -78,14 +80,14 @@ public class ScannerImpl implements Scanner {
         return false;
     }
 
-    public Token peekToken() {
+    public AbstractToken peekToken() {
         while (needMoreTokens()) {
             fetchMoreTokens();
         }
         return this.tokens.get(0);
     }
 
-    public Token getToken() {
+    public AbstractToken getToken() {
         if (!this.tokens.isEmpty()) {
             // this.tokensTaken++;
             return this.tokens.remove(0);
@@ -123,7 +125,8 @@ public class ScannerImpl implements Scanner {
             return;
         case '#':
             // a COMMENT.
-            fetchComment();
+            final String comment = reader.readLineForward().trim();
+            handleComment(comment);
             return;
         }
         // a PLAN.
@@ -139,29 +142,29 @@ public class ScannerImpl implements Scanner {
         // fetch an UNKNOWN token, but attach it to latest processed token
         // if possible. In some documentation and API's, this kind of token is
         // used as COMMENT too.
-        fetchUnkownToken();
+        final String unknown = reader.readLineForward().trim();
+        handleUnknown(unknown);
         // return; // already implicit
     }
 
-    // Fetchers.
-
-    private void fetchComment() {
-        final String comment = reader.readLineForward().trim();
-
-        // Add COMMENT.
-        Token token = this.fetchComment(comment);
+    private void addToken(AbstractToken token) {
+        this.latestToken = token;
         this.tokens.add(token);
     }
 
-    private Token fetchComment(String comment) {
-        return fetchComment(comment, false);
+    private void handleComment(String comment) {
+        if (latestToken != null && latestToken instanceof CommentableToken) {
+            ((CommentableToken) latestToken).addComment(comment);
+        }
     }
 
-    private Token fetchComment(String comment, boolean inline) {
-        Mark startMark = reader.getMark();
-        Mark endMark = reader.getMark();
-        return new CommentToken(comment, inline, startMark, endMark);
+    private void handleUnknown(String line) {
+        if (latestToken != null && latestToken instanceof DiagnosticableToken) {
+            ((DiagnosticableToken) latestToken).addDiagnostics(line);
+        }
     }
+
+    // Fetchers.
 
     private void fetchPlan() {
         Mark startMark = reader.getMark();
@@ -174,10 +177,11 @@ public class ScannerImpl implements Scanner {
             int end = Integer.parseInt(matcher.group(2));
 
             // Add PLAN.
-            Token unknownToken = new PlanToken(begin, end, startMark, endMark);
-            this.tokens.add(unknownToken);
+            AbstractToken planToken = new PlanToken(begin, end, startMark,
+                    endMark);
+            addToken(planToken);
         } else {
-            this.fetchUnkownToken(plan);
+            handleUnknown(plan);
         }
     }
 
@@ -190,8 +194,8 @@ public class ScannerImpl implements Scanner {
         Mark mark = reader.getMark();
 
         // Add STREAM-START.
-        Token token = new StreamStartToken(mark, mark);
-        this.tokens.add(token);
+        AbstractToken token = new StreamStartToken(mark, mark);
+        addToken(token);
     }
 
     private void fetchStreamEnd() {
@@ -202,66 +206,123 @@ public class ScannerImpl implements Scanner {
         Mark mark = reader.getMark();
 
         // Add STREAM-END.
-        Token token = new StreamEndToken(mark, mark);
-        this.tokens.add(token);
+        AbstractToken token = new StreamEndToken(mark, mark);
+        addToken(token);
 
         // The stream is finished.
         this.done = true;
     }
 
     private void fetchTestResult() {
-        String line = reader.readLineForward();
-        Pattern pattern = Pattern
-                .compile("^(ok|not ok)\\s+(\\d*)\\s?(.*)?(#.*)?");
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.matches() && matcher.groupCount() >= 2) {
-            Token testResultToken;
-            int groups = matcher.groupCount();
-            String statusText = matcher.group(1);
-            Status status = "ok".equals(statusText) ? Status.OK : Status.NOT_OK;
-            int number = Integer.parseInt(matcher.group(2));
-            Mark startMark = reader.getMark();
-            Mark endMark = reader.getMark();
-            switch (groups) {
-            case 2:
-                testResultToken = new TestResultToken(status, number, null,
-                        null, startMark, endMark);
-                break;
-            case 3:
-                testResultToken = new TestResultToken(status, number,
-                        matcher.group(3), null, startMark, endMark);
-                break;
-            case 4:
-                String comment = matcher.group(4);
-                Token commentToken = this.fetchComment(comment, /* inline */
-                        true);
-                testResultToken = new TestResultToken(status, number,
-                        matcher.group(3), (CommentToken) commentToken,
-                        startMark, endMark);
-                break;
-            default:
-                testResultToken = new UnknownToken(line, startMark, endMark);
-            }
-
-            // Add TEST-RESULT.
-            this.tokens.add(testResultToken);
-        } else {
-            this.fetchUnkownToken(line);
-        }
-    }
-
-    private void fetchUnkownToken() {
-        String line = reader.readLineForward();
-        this.fetchUnkownToken(line);
-    }
-
-    private void fetchUnkownToken(String token) {
         Mark startMark = reader.getMark();
-        Mark endMark = reader.getMark();
 
-        // Add an UNKNOWN.
-        Token unknownToken = new UnknownToken(token, startMark, endMark);
-        this.tokens.add(unknownToken);
+        // match against ^(ok|not ok)\s+\d*.*
+        int index = 2;
+        String statusText = reader.prefix(index);
+        char ch = '\0';
+        boolean flag = false;
+        if (!"ok".equals(statusText)) {
+            index = 6;
+            statusText = reader.prefix(index);
+            if (!"not ok".equals(statusText)) {
+                throw new ScannerException("while scanning a test result",
+                        reader.getMark(), "could not find test status",
+                        reader.getMark());
+            }
+        }
+        Status status = "ok".equals(statusText) ? Status.OK : Status.NOT_OK;
+
+        ch = reader.peek(index);
+        StringBuilder buffer = new StringBuilder();
+        final int number;
+        if (' ' == ch) {
+            while (true) {
+                ++index;
+                ch = reader.peek(index);
+                if (' ' == ch || Constant.NULL_OR_LINEBR.has(ch)) {
+                    if (!flag)
+                        continue;
+                    else
+                        break;
+                }
+                flag = true;
+                buffer.append(ch);
+            }
+            String r = buffer.toString();
+            if (r.length() > 0) {
+                try {
+                    number = Integer.parseInt(r);
+                } catch (NumberFormatException nfe) {
+                    throw new ScannerException("while scanning a test result",
+                            reader.getMark(), "could not find test number",
+                            reader.getMark());
+                }
+            } else {
+                throw new ScannerException("while scanning a test result",
+                        reader.getMark(), "invalid test result",
+                        reader.getMark());
+            }
+        } else {
+            throw new ScannerException("while scanning a test result",
+                    reader.getMark(), "could not find test number",
+                    reader.getMark());
+        }
+
+        ch = reader.peek(index);
+        buffer = new StringBuilder();
+        String description = "";
+        if (' ' == ch) {
+            while (true) {
+                ch = reader.peek(index);
+                if ('#' != ch && !Constant.LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            description = buffer.toString().trim();
+        }
+
+        ch = reader.peek(index);
+        buffer = new StringBuilder();
+        String comment = "";
+        Skip skip = null;
+        Todo todo = null;
+        // Comment or Directive
+        if ('#' == ch) {
+            while (true) {
+                ch = reader.peek(index);
+                if (!Constant.NULL_OR_LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            final String r = buffer.toString().trim();
+            if (r.matches("\\s?#\\s?SKIP.*")) {
+                Pattern pattern = Pattern.compile("\\s?#\\s?SKIP(.*)");
+                Matcher matcher = pattern.matcher(r);
+                if (matcher.matches() && matcher.groupCount() >= 1) {
+                    skip = new Skip(matcher.group(1).trim());
+                }
+            } else if (r.matches("\\s?#\\s?TODO.*")) {
+                Pattern pattern = Pattern.compile("\\s?#\\s?TODO(.*)");
+                Matcher matcher = pattern.matcher(r);
+                if (matcher.matches() && matcher.groupCount() >= 1) {
+                    todo = new Todo(matcher.group(1).trim());
+                }
+            } else {
+                comment = buffer.toString().trim();
+            }
+        }
+
+        Mark endMark = reader.getMark();
+        AbstractToken testResultToken;
+        testResultToken = new TestResultToken(status, number, description,
+                comment, skip, todo, startMark, endMark);
+        reader.forward(index);
+        // Add TEST-RESULT.
+        addToken(testResultToken);
     }
 
     private void fetchVersion(String version) {
@@ -273,8 +334,9 @@ public class ScannerImpl implements Scanner {
         Mark endMark = reader.getMark();
 
         // Add VERSION.
-        Token token = new VersionToken(versionNumber, startMark, endMark);
-        tokens.add(token);
+        AbstractToken token = new VersionToken(versionNumber, startMark,
+                endMark);
+        addToken(token);
     }
 
     // Scanners.
@@ -300,8 +362,44 @@ public class ScannerImpl implements Scanner {
     }
 
     private boolean scanTestResult() {
-        String line = reader.readLine();
-        return line.matches("^(ok|not ok)\\s+\\d*.*");
+        // match against ^(ok|not ok)\s+\d*.*
+        int index = 2;
+        String maybeStatus = reader.prefix(index);
+        char ch = '\0';
+        boolean flag = false;
+        if (!"ok".equals(maybeStatus)) {
+            index = 6;
+            maybeStatus = reader.prefix(index);
+            if (!"not ok".equals(maybeStatus)) {
+                return false;
+            }
+        }
+        ch = reader.peek(index);
+        StringBuilder buffer = new StringBuilder();
+        if (' ' == ch) {
+            while (true) {
+                ++index;
+                ch = reader.peek(index);
+                if (' ' == ch || Constant.NULL_OR_LINEBR.has(ch)) {
+                    if (!flag)
+                        continue;
+                    else
+                        break;
+                }
+                flag = true;
+                buffer.append(ch);
+            }
+            String r = buffer.toString();
+            if (r.length() > 0) {
+                try {
+                    Integer.parseInt(r);
+                    return true;
+                } catch (NumberFormatException nfe) {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 
     private void scanToNextToken() {
@@ -333,7 +431,7 @@ public class ScannerImpl implements Scanner {
 
     private String scanVersion() {
         String line = reader.readLine();
-        if (line.matches("^TAP\\s+version\\s+(\\d*)")) {
+        if (line.matches("^TAP\\s+version\\s+(\\d+)")) {
             return line;
         }
         return "";
@@ -343,7 +441,24 @@ public class ScannerImpl implements Scanner {
         Scanner scanner = new ScannerImpl(
                 new StreamReader(
                         "TAP version 13\n"
-                                + "1..10\n"
+                                + "1..1\n"
+                                + "ok 1 #TODO"));
+        AbstractToken token = null;
+        do {
+            token = scanner.getToken();
+            if (token != null) {
+                System.out.println(token);
+            }
+            token = scanner.peekToken();
+        } while (token != null && !(token instanceof StreamEndToken));
+        System.out.println(token);
+    }
+    
+    public static void main2(String[] args) {
+        Scanner scanner = new ScannerImpl(
+                new StreamReader(
+                        "TAP version 14\n"
+                                + "1..11\n"
                                 + "# eae, beleza??\n"
                                 + "ok 1 what's up buddy? # a comment is always good, righto?\n\r\n"
                                 + "not ok 2 - something's wrong here...\n"
@@ -356,9 +471,10 @@ public class ScannerImpl implements Scanner {
                                 + "ok 6 - Ya-hoo! No regressions!\n"
                                 + "not ok 7 #SKIP\r\n"
                                 + "ok 8 #TODO not enough memory on this computer\n"
-                                + "ok 8 Hey buddy\n" + "not ok 9\r\n"
-                                + "not ok 10    \n" + "1..4\n" + "done\n\n"));
-        Token token = null;
+                                + "ok 9 Hey buddy\n" + "not ok 9\r\n"
+                                + "not ok 10  y  \n" + "1..4\n" + "done\n\n"
+                        		+ "ok 11 #TODO"));
+        AbstractToken token = null;
         do {
             token = scanner.getToken();
             if (token != null) {

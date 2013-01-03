@@ -22,16 +22,16 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.scanner;
+package org.tap4j.tokens;
 
-import org.tap4j.tokens.AbstractToken;
+/**
+ * Marker interface for tokens that support diagnostics (not YAMLish, but 
+ * plan text - or unknown tokens).
+ */
+public interface DiagnosticableToken extends Token {
 
-public interface Scanner {
-
-    boolean checkToken(AbstractToken.ID... choices);
-
-    AbstractToken peekToken();
-
-    AbstractToken getToken();
-
+    void addDiagnostics(String text);
+    
+    String getDiagnostics();
+    
 }

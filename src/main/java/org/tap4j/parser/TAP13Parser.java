@@ -24,37 +24,43 @@
 
 package org.tap4j.parser;
 
-import java.util.Stack;
-
-import org.tap4j.error.Mark;
 import org.tap4j.events.Event;
 import org.tap4j.events.Event.ID;
+import org.tap4j.events.PlanEvent;
+import org.tap4j.events.StreamEndEvent;
 import org.tap4j.events.StreamStartEvent;
-import org.tap4j.model.TestSet;
+import org.tap4j.events.TestResultEvent;
+import org.tap4j.events.VersionEvent;
 import org.tap4j.reader.StreamReader;
 import org.tap4j.scanner.Scanner;
 import org.tap4j.scanner.ScannerImpl;
+import org.tap4j.tokens.AbstractToken;
+import org.tap4j.tokens.PlanToken;
+import org.tap4j.tokens.StreamEndToken;
 import org.tap4j.tokens.StreamStartToken;
-import org.tap4j.tokens.Token;
+import org.tap4j.tokens.TestResultToken;
 import org.tap4j.tokens.VersionToken;
 
 public class TAP13Parser implements Parser {
 
     private final Scanner scanner;
     private Event currentEvent;
-    private final Stack<Production> states;
-    private final Stack<Mark> marks;
+    // private final Stack<Production> states;
+    // private final Stack<Mark> marks;
     private Production state;
-    
+    private boolean planSet = false;
+
     public TAP13Parser(StreamReader reader) {
         this.scanner = new ScannerImpl(reader);
         currentEvent = null;
-        states = new Stack<Production>();
-        marks = new Stack<Mark>();
+        // states = new Stack<Production>();
+        // marks = new Stack<Mark>();
         state = new ParseStreamStart();
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tap4j.parser.Parser#checkEvent(org.tap4j.events.Event.ID)
      */
     public boolean checkEvent(ID choices) {
@@ -67,7 +73,9 @@ public class TAP13Parser implements Parser {
         return false;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tap4j.parser.Parser#peekEvent()
      */
     public Event peekEvent() {
@@ -79,7 +87,9 @@ public class TAP13Parser implements Parser {
         return currentEvent;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tap4j.parser.Parser#getEvent()
      */
     public Event getEvent() {
@@ -88,41 +98,118 @@ public class TAP13Parser implements Parser {
         currentEvent = null;
         return value;
     }
-    
+
     // Productions.
-    
+
     private class ParseStreamStart implements Production {
         public Event produce() {
             StreamStartToken token = (StreamStartToken) scanner.getToken();
-            Event event = new StreamStartEvent(token.getStartMark(), token.getEndMark());
+            Event event = new StreamStartEvent(token.getStartMark(),
+                    token.getEndMark());
             // Prepare the next event
-            state = new ParseVersion();
+            if (scanner.checkToken(AbstractToken.ID.Version)) {
+                state = new ParseVersion();
+            } else if (scanner.checkToken(AbstractToken.ID.Plan)) {
+                state = new ParsePlan(/* beginning */true);
+            } else if (scanner.checkToken(AbstractToken.ID.TestResult)) {
+                state = new ParseTestResult();
+            } else {
+                throw new ParserException(null, null,
+                        "expected '<version>, <plan> or <test result>', but found "
+                                + scanner.peekToken().getTokenId(), scanner
+                                .peekToken().getStartMark());
+            }
             return event;
         }
     }
-    
-    private class ParseVersion implements Production {
+
+    private class ParseStreamEnd implements Production {
         public Event produce() {
-            if (scanner.checkToken(Token.ID.TAPVersion)) {
-                // VERSION
+            if (scanner.checkToken(AbstractToken.ID.StreamEnd)) {
+                StreamEndToken token = (StreamEndToken) scanner.getToken();
+                Event event = new StreamEndEvent(token.getStartMark(),
+                        token.getEndMark());
+                return event;
             } else {
-                // PLAN
+                throw new ParserException(null, null,
+                        "expected '<end stream>', but found "
+                                + scanner.peekToken().getTokenId(), scanner
+                                .peekToken().getStartMark());
             }
-            return null;
         }
     }
-    
+
+    private class ParseVersion implements Production {
+        public Event produce() {
+            VersionToken token = (VersionToken) scanner.getToken();
+            Event event = new VersionEvent(token.getVersion(),
+                    token.getStartMark(), token.getEndMark());
+            if (scanner.checkToken(AbstractToken.ID.Plan)) {
+                state = new ParsePlan(true);
+            } else {
+                state = new ParseTestResult();
+            }
+            return event;
+        }
+    }
+
+    private class ParsePlan implements Production {
+        private final boolean beginning;
+
+        public ParsePlan(boolean beginning) {
+            this.beginning = beginning;
+        }
+
+        public Event produce() {
+            PlanToken token = (PlanToken) scanner.getToken();
+            if (planSet) {
+                throw new ParserException(null, null, 
+                        "found '<plan>' defined twice", token.getStartMark());
+            }
+            planSet = true;
+            Event event = new PlanEvent(token.getBegin(), token.getEnd(),
+                    token.getStartMark(), token.getEndMark());
+            if (beginning && scanner.peekToken() instanceof TestResultToken) {
+                state = new ParseTestResult();
+            } else {
+                state = new ParseStreamEnd();
+            }
+            return event;
+        }
+    }
+
+    private class ParseTestResult implements Production {
+        public Event produce() {
+            TestResultToken token = (TestResultToken) scanner.getToken();
+            Event event = new TestResultEvent(token.getStatus(),
+                    token.getNumber(), token.getDescription(),
+                    token.getComment(), token.getSkip(), token.getTodo(),
+                    token.getStartMark(), token.getEndMark());
+            if (scanner.checkToken(AbstractToken.ID.TestResult)) {
+                state = new ParseTestResult();
+            } else if(scanner.checkToken(AbstractToken.ID.Plan)) {
+                state = new ParsePlan(false);
+            } else {
+                state = new ParseStreamEnd();
+            }
+            return event;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-        String tap = "TAP version 13\n" +
-        		"1..2\n" +
-        		"ok 1\n" +
-        		"not ok 2";
+        String tap = "# a comment before the version... dan dan dan dannn...\n"
+                        + "TAP version 13\n" 
+                        + "1..2\n"
+                        + "ok 1 nope\n" 
+                        + "not ok 2 #SKIP yo # d\n"
+                        + "ok 3 #TODO enhance it\n";
         StreamReader reader = new StreamReader(tap);
         Parser parser = new TAP13Parser(reader);
-        Event event = parser.getEvent();
-        System.out.println(event);
-        event = parser.getEvent();
-        System.out.println(event);
+        Event event = null;
+        while (!(event instanceof StreamEndEvent)) {
+            event = parser.getEvent();
+            System.out.println(event);
+        }
     }
 
 }

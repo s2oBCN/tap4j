@@ -24,24 +24,13 @@
 
 package org.tap4j.tokens;
 
-import org.tap4j.error.Mark;
+/**
+ * Marker interface for tokens that accept comments.
+ */
+public interface CommentableToken extends Token {
 
-public class UnknownToken extends Token {
-
-    private final String line;
-
-    public UnknownToken(String line, Mark startMark, Mark endMark) {
-        super(startMark, endMark);
-        this.line = line;
-    }
-
-    public String getLine() {
-        return line;
-    }
-
-    @Override
-    public ID getTokenId() {
-        return ID.Unknown;
-    }
-
+    void addComment(String comment);
+    
+    String getComment();
+    
 }

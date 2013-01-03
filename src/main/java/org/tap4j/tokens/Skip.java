@@ -22,16 +22,40 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.scanner;
+package org.tap4j.tokens;
 
-import org.tap4j.tokens.AbstractToken;
+public class Skip {
 
-public interface Scanner {
+    private final String description;
+    
+    /**
+     * 
+     */
+    public Skip() {
+        this.description = "";
+    }
 
-    boolean checkToken(AbstractToken.ID... choices);
-
-    AbstractToken peekToken();
-
-    AbstractToken getToken();
-
+    /**
+     * @param description
+     */
+    public Skip(String description) {
+        super();
+        this.description = description;
+    }
+    
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return getDescription();
+    }
+    
 }

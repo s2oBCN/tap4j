@@ -31,9 +31,10 @@ public class Constant {
     private final static String LINEBR_S = "\n\u0085\u2028\u2029";
     private final static String FULL_LINEBR_S = "\r" + LINEBR_S;
     private final static String NULL_OR_LINEBR_S = "\0" + FULL_LINEBR_S;
-
+    private final static String SPACE_S = " ";
     public final static Constant LINEBR = new Constant(LINEBR_S);
     public final static Constant NULL_OR_LINEBR = new Constant(NULL_OR_LINEBR_S);
+    public final static Constant SPACE = new Constant(SPACE_S);
 
     private String content;
     boolean[] contains = new boolean[128];

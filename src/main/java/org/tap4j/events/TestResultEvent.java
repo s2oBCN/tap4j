@@ -22,40 +22,30 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.tokens;
+package org.tap4j.events;
 
 import org.tap4j.error.Mark;
+import org.tap4j.tokens.Skip;
+import org.tap4j.tokens.TestResultToken;
+import org.tap4j.tokens.TestResultToken.Status;
+import org.tap4j.tokens.Todo;
 
-public class TestResultToken extends AbstractToken implements CommentableToken,
-        DiagnosticableToken {
-    public enum Status {
-        OK, NOT_OK
-    }
+public class TestResultEvent extends Event {
 
     private final Status status;
     private final int number;
     private final String description;
-    private String comment;
+    private final String comment;
     private final Skip skip;
     private final Todo todo;
-    private final StringBuilder diagnostics;
 
-    public TestResultToken(Status status, int number, String description,
+    public TestResultEvent(Status status, int number, String description,
             String comment, Mark startMark, Mark endMark) {
-        this(status, number, description, comment, null, null, startMark, endMark);
+        this(status, number, description, comment, null, null, startMark,
+                endMark);
     }
 
-    /**
-     * @param status
-     * @param number
-     * @param description
-     * @param comment
-     * @param skip
-     * @param todo
-     * @param startMark
-     * @param endMark
-     */
-    public TestResultToken(Status status, int number, String description,
+    public TestResultEvent(Status status, int number, String description,
             String comment, Skip skip, Todo todo, Mark startMark, Mark endMark) {
         super(startMark, endMark);
         this.status = status;
@@ -64,82 +54,64 @@ public class TestResultToken extends AbstractToken implements CommentableToken,
         this.comment = comment;
         this.skip = skip;
         this.todo = todo;
-        this.diagnostics = new StringBuilder();
     }
 
+    /**
+     * @return the status
+     */
     public Status getStatus() {
         return status;
     }
 
+    /**
+     * @return the number
+     */
     public int getNumber() {
         return number;
     }
 
+    /**
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tap4j.tokens.CommentableToken#addComment(java.lang.String)
-     */
-    public void addComment(String comment) {
-        this.comment = comment;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tap4j.tokens.CommentableToken#getComment()
+    /**
+     * @return the comment
      */
     public String getComment() {
         return comment;
     }
-
+    
     /**
      * @return the skip
      */
     public Skip getSkip() {
         return skip;
     }
-
+    
     /**
      * @return the todo
      */
     public Todo getTodo() {
         return todo;
     }
-
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.events.Event#is(org.tap4j.events.Event.ID)
+     */
     @Override
-    public ID getTokenId() {
-        return ID.TestResult;
+    public boolean is(ID id) {
+        return ID.TestResult == id;
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.tap4j.tokens.DiagnosticableToken#addDiagnostics(java.lang.String)
-     */
-    public void addDiagnostics(String text) {
-        this.diagnostics.append(text);
-        this.diagnostics.append('\n');
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tap4j.tokens.DiagnosticableToken#getDiagnostics()
-     */
-    public String getDiagnostics() {
-        return this.diagnostics.toString();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tap4j.tokens.AbstractToken#getArguments()
+     * @see org.tap4j.events.Event#getArguments()
      */
     @Override
     protected String getArguments() {

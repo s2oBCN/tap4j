@@ -26,7 +26,7 @@ package org.tap4j.tokens;
 
 import org.tap4j.error.Mark;
 
-public class VersionToken extends Token {
+public class VersionToken extends AbstractToken {
 
     private final int version;
 
@@ -37,11 +37,19 @@ public class VersionToken extends Token {
 
     @Override
     public ID getTokenId() {
-        return ID.TAPVersion;
+        return ID.Version;
     }
 
     public int getVersion() {
         return version;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.tap4j.tokens.AbstractToken#getArguments()
+     */
+    @Override
+    protected String getArguments() {
+        return "version="+version;
     }
 
 }

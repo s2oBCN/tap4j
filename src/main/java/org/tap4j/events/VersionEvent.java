@@ -22,37 +22,44 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.tokens;
+package org.tap4j.events;
 
 import org.tap4j.error.Mark;
 
-public class CommentToken extends Token {
+public class VersionEvent extends Event {
 
-    private final String comment;
-    private final boolean inline;
-
-    public CommentToken(String comment, Mark startMark, Mark endMark) {
-        this(comment, /* inline */false, startMark, endMark);
-    }
-
-    public CommentToken(String comment, boolean inline, Mark startMark,
-            Mark endMark) {
+    private final int version;
+    
+    /**
+     * @param startMark
+     * @param endMark
+     */
+    public VersionEvent(int version, Mark startMark, Mark endMark) {
         super(startMark, endMark);
-        this.comment = comment;
-        this.inline = inline;
+        this.version = version;
+    }
+    
+    /**
+     * @return the version
+     */
+    public int getVersion() {
+        return version;
     }
 
-    public String getComment() {
-        return comment;
-    }
-
-    public boolean isInline() {
-        return inline;
-    }
-
+    /* (non-Javadoc)
+     * @see org.tap4j.events.Event#is(org.tap4j.events.Event.ID)
+     */
     @Override
-    public ID getTokenId() {
-        return ID.Comment;
+    public boolean is(ID id) {
+        return ID.Version == id;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.tap4j.events.Event#getArguments()
+     */
+    @Override
+    protected String getArguments() {
+        return "version=" + getVersion();
     }
 
 }

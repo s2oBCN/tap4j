@@ -26,14 +26,14 @@ package org.tap4j.tokens;
 
 import org.tap4j.error.Mark;
 
-public final class StreamEndToken extends Token {
+public final class StreamEndToken extends AbstractToken {
 
     public StreamEndToken(Mark startMark, Mark endMark) {
         super(startMark, endMark);
     }
 
     @Override
-    public Token.ID getTokenId() {
+    public AbstractToken.ID getTokenId() {
         return ID.StreamEnd;
     }
 }

@@ -26,15 +26,19 @@ package org.tap4j.tokens;
 
 import org.tap4j.error.Mark;
 
-public class PlanToken extends Token {
+public class PlanToken extends AbstractToken implements CommentableToken,
+        DiagnosticableToken {
 
     private final int begin;
     private final int end;
+    private String comment;
+    private final StringBuilder diagnostics;
 
     public PlanToken(int begin, int end, Mark startMark, Mark endMark) {
         super(startMark, endMark);
         this.begin = begin;
         this.end = end;
+        this.diagnostics = new StringBuilder();
     }
 
     public int getBegin() {
@@ -48,6 +52,55 @@ public class PlanToken extends Token {
     @Override
     public ID getTokenId() {
         return ID.Plan;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.tokens.CommentableToken#addComment(java.lang.String)
+     */
+    public void addComment(String comment) {
+        this.comment = comment;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.tokens.CommentableToken#getComment()
+     */
+    public String getComment() {
+        return this.comment;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.tap4j.tokens.DiagnosticableToken#addDiagnostics(java.lang.String)
+     */
+    public void addDiagnostics(String text) {
+        this.diagnostics.append(text);
+        this.diagnostics.append('\n');
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.tokens.DiagnosticableToken#getDiagnostics()
+     */
+    public String getDiagnostics() {
+        return this.diagnostics.toString();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.tokens.AbstractToken#getArguments()
+     */
+    @Override
+    protected String getArguments() {
+        return "begin=" + this.begin + ", end=" + end + ", comment=" + comment
+                + ", diagnostics=" + diagnostics;
     }
 
 }

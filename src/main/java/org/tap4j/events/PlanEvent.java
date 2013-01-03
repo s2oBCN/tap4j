@@ -22,16 +22,53 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.scanner;
+package org.tap4j.events;
 
-import org.tap4j.tokens.AbstractToken;
+import org.tap4j.error.Mark;
 
-public interface Scanner {
+public class PlanEvent extends Event {
 
-    boolean checkToken(AbstractToken.ID... choices);
+    private final int begin;
+    private final int end;
 
-    AbstractToken peekToken();
+    /**
+     * @param startMark
+     * @param endMark
+     */
+    public PlanEvent(int begin, int end, Mark startMark, Mark endMark) {
+        super(startMark, endMark);
+        this.begin = begin;
+        this.end = end;
+    }
 
-    AbstractToken getToken();
+    /* (non-Javadoc)
+     * @see org.tap4j.events.Event#is(org.tap4j.events.Event.ID)
+     */
+    @Override
+    public boolean is(ID id) {
+        return ID.Plan == id;
+    }
+    
+    /**
+     * @return the begin
+     */
+    public int getBegin() {
+        return begin;
+    }
+    
+    /**
+     * @return the end
+     */
+    public int getEnd() {
+        return end;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.tap4j.events.Event#getArguments()
+     */
+    @Override
+    protected String getArguments() {
+        return "begin=" + getBegin() + ", end=" + getEnd();
+    }
 
 }

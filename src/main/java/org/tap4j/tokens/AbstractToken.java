@@ -25,15 +25,53 @@
 package org.tap4j.tokens;
 
 import org.tap4j.error.Mark;
+import org.tap4j.error.TAPException;
 
-public final class StreamStartToken extends AbstractToken {
+public abstract class AbstractToken implements Token {
+    public enum ID {
+        Comment, LineBreak, Plan, StreamEnd, StreamStart, Version, TestResult, Unknown
+    }
 
-    public StreamStartToken(Mark startMark, Mark endMark) {
-        super(startMark, endMark);
+    private final Mark startMark;
+    private final Mark endMark;
+
+    public AbstractToken(Mark startMark, Mark endMark) {
+        if (startMark == null || endMark == null) {
+            throw new TAPException("Token requires marks.");
+        }
+        this.startMark = startMark;
+        this.endMark = endMark;
+    }
+
+    public Mark getStartMark() {
+        return startMark;
+    }
+
+    public Mark getEndMark() {
+        return endMark;
+    }
+
+    protected String getArguments() {
+        return "";
+    }
+
+    public abstract AbstractToken.ID getTokenId();
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof AbstractToken) {
+            return toString().equals(obj.toString());
+        }
+        return false;
     }
 
     @Override
-    public AbstractToken.ID getTokenId() {
-        return ID.StreamStart;
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "<" + this.getClass().getName() + "(" + getArguments() + ")>";
     }
 }
