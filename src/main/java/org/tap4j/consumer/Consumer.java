@@ -24,33 +24,71 @@
 
 package org.tap4j.consumer;
 
-import java.io.File;
-
-import org.tap4j.error.TAPException;
+import org.tap4j.events.Event;
+import org.tap4j.events.PlanEvent;
+import org.tap4j.events.TestResultEvent;
+import org.tap4j.events.VersionEvent;
+import org.tap4j.model.Header;
+import org.tap4j.model.Plan;
+import org.tap4j.model.StatusValues;
+import org.tap4j.model.TestResult;
 import org.tap4j.model.TestSet;
+import org.tap4j.parser.Parser;
+import org.tap4j.parser.TAP13Parser;
+import org.tap4j.reader.StreamReader;
+import org.tap4j.tokens.TestResultToken.Status;
 
-/**
- * A TAP consumer. Responsible for consuming a TAP stream and producing a Test
- * Set.
- */
-public interface Consumer {
+public class Consumer {
 
-    /**
-     * Consume a TAP File.
-     * 
-     * @param file TAP File.
-     * @return TestSet
-     * @throws TAPException
-     */
-    TestSet load(File file) throws TAPException;
-
-    /**
-     * Consume a TAP Stream.
-     * 
-     * @param tapStream TAP Stream
-     * @return TestSet
-     * @throws TAPException
-     */
-    TestSet load(String tapStream) throws TAPException;
+    private final Parser parser;
+    
+    public Consumer(Parser parser) {
+        this.parser = parser;
+    }
+    
+    public TestSet getTestSet() {
+        // Drop STREAM-START
+        parser.getEvent();
+        
+        TestSet testSet = new TestSet();
+        
+        // VERSION
+        if (parser.checkEvent(Event.ID.Version)) {
+            VersionEvent event = (VersionEvent) parser.getEvent();
+            Header header = new Header(event.getVersion());
+            testSet.setHeader(header);
+        } 
+        
+        // PLAN
+        if (parser.checkEvent(Event.ID.Plan)) {
+            PlanEvent event = (PlanEvent) parser.getEvent();
+            // TODO: skip and todo directives... skip all?
+            Plan plan = new Plan(event.getBegin(), event.getEnd());
+            testSet.setPlan(plan);
+        }
+        
+        // TEST-RESULTS
+        while (parser.checkEvent(Event.ID.TestResult)) {
+            TestResultEvent event = (TestResultEvent) parser.getEvent();
+            TestResult testResult = new TestResult();
+            testResult.setStatus(event.getStatus() == Status.OK ? StatusValues.OK : StatusValues.NOT_OK);
+            testResult.setDescription(event.getDescription());
+            testResult.setTestNumber(event.getNumber());
+            testSet.addTestResult(testResult);
+        }
+        
+        return testSet;
+    }
+    
+    public static void main(String[] args) {
+        String stream = "TAP version 13\n" +
+        		"1..2\n" +
+        		"ok 1 no problemo bro # yah!\n" +
+        		"not ok 2";
+        Parser parser = new TAP13Parser(new StreamReader(stream));
+        Consumer consumer = new Consumer(parser);
+        TestSet testSet = consumer.getTestSet();
+        System.out.println(testSet.getTestResults().size());
+    }
 
 }

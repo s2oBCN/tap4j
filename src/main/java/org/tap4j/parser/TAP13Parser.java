@@ -113,11 +113,13 @@ public class TAP13Parser implements Parser {
                 state = new ParsePlan(/* beginning */true);
             } else if (scanner.checkToken(AbstractToken.ID.TestResult)) {
                 state = new ParseTestResult();
-            } else {
+            } else if (!scanner.checkToken(AbstractToken.ID.StreamEnd)) {
                 throw new ParserException(null, null,
                         "expected '<version>, <plan> or <test result>', but found "
                                 + scanner.peekToken().getTokenId(), scanner
                                 .peekToken().getStartMark());
+            } else {
+                state = new ParseStreamEnd();
             }
             return event;
         }

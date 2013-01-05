@@ -26,34 +26,38 @@ package org.tap4j;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.StringReader;
+import java.util.Iterator;
 
 import org.tap4j.consumer.Consumer;
+import org.tap4j.events.Event;
+import org.tap4j.events.Event.ID;
 import org.tap4j.model.TestSet;
+import org.tap4j.parser.Parser;
+import org.tap4j.parser.TAP13Parser;
 import org.tap4j.reader.StreamReader;
 import org.tap4j.reader.UnicodeReader;
 
 public class TAP {
     private String name;
-    protected Consumer consumer;
-    
+
     public TAP() {
         this(null);
     }
-    
+
     public TAP(Consumer consumer) {
         super();
-        this.consumer = consumer;
         this.name = "TAP:" + System.identityHashCode(this);
     }
 
     public TestSet load(String tap) {
         return loadFromReader(new StreamReader(tap));
     }
-    
+
     public TestSet load(InputStream io) {
         return loadFromReader(new StreamReader(new UnicodeReader(io)));
     }
-    
+
     public TestSet load(Reader reader) {
         return loadFromReader(new StreamReader(reader));
     }
@@ -63,28 +67,57 @@ public class TAP {
      * @return
      */
     private TestSet loadFromReader(StreamReader streamReader) {
-        return null;
+        Consumer composer = new Consumer(new TAP13Parser(streamReader));
+        return composer.getTestSet();
     }
-    
-//    public Iterable<Event> parse(Reader tap) {
-//        final Parser parser = 
-//    }
-    
+
+    public Iterable<Event> parse(Reader tap) {
+        final Parser parser = new TAP13Parser(new StreamReader(tap));
+        Iterator<Event> result = new Iterator<Event>() {
+            public boolean hasNext() {
+                return parser.peekEvent() != null;
+            }
+
+            public Event next() {
+                return parser.getEvent();
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+        return new EventIterable(result);
+    }
+
+    private class EventIterable implements Iterable<Event> {
+        private Iterator<Event> iterator;
+
+        public EventIterable(Iterator<Event> result) {
+            this.iterator = result;
+        }
+
+        public Iterator<Event> iterator() {
+            return iterator;
+        }
+    }
+
     /**
      * @return the name
      */
     public String getName() {
         return name;
     }
-    
+
     /**
      * @param name the name to set
      */
     public void setName(String name) {
         this.name = name;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#toString()
      */
     @Override
@@ -92,4 +125,13 @@ public class TAP {
         return name;
     }
     
+    public static void main(String[] args) {
+        String stream = "";
+        TAP tap = new TAP();
+        Iterable<Event> events = tap.parse(new StringReader(stream));
+        for(Event event : events) {
+            System.out.println(event);
+        }
+    }
+
 }
