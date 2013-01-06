@@ -24,17 +24,24 @@
 
 package org.tap4j.scanner;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.tap4j.consumer.Consumer;
 import org.tap4j.error.Mark;
+import org.tap4j.model.TestSet;
+import org.tap4j.parser.Parser;
+import org.tap4j.parser.TAP13Parser;
 import org.tap4j.reader.StreamReader;
 import org.tap4j.tokens.AbstractToken;
 import org.tap4j.tokens.AbstractToken.ID;
+import org.tap4j.tokens.BailOutToken;
 import org.tap4j.tokens.CommentableToken;
 import org.tap4j.tokens.DiagnosticableToken;
+import org.tap4j.tokens.FooterToken;
 import org.tap4j.tokens.PlanToken;
 import org.tap4j.tokens.Skip;
 import org.tap4j.tokens.StreamEndToken;
@@ -112,9 +119,8 @@ public class ScannerImpl implements Scanner {
         scanToNextToken();
         // unwindIndent(reader.getColumn());
         // VERSION
-        String version = scanVersion();
-        if (version.length() > 0) {
-            fetchVersion(version);
+        if (scanVersion()) {
+            fetchVersion();
             return;
         }
         char ch = reader.peek();
@@ -139,6 +145,19 @@ public class ScannerImpl implements Scanner {
             fetchTestResult();
             return;
         }
+
+        // a FOOTER.
+        if (scanFooter()) {
+            fetchFooter();
+            return;
+        }
+        
+        // a BAIL-OUT
+        if (scanBailOut()) {
+            fetchBailOut();
+            return;
+        }
+        
         // fetch an UNKNOWN token, but attach it to latest processed token
         // if possible. In some documentation and API's, this kind of token is
         // used as COMMENT too.
@@ -161,6 +180,21 @@ public class ScannerImpl implements Scanner {
     private void handleUnknown(String line) {
         if (latestToken != null && latestToken instanceof DiagnosticableToken) {
             ((DiagnosticableToken) latestToken).addDiagnostics(line);
+        }
+    }
+
+    private void eatSpaces() {
+        eatSpaces(/* index */ 0);
+    }
+    
+    private void eatSpaces(int index) {
+        char ch = reader.peek(index);
+        while (ch == ' ') {
+            ++index;
+            ch = reader.peek(index);
+        }
+        if (index > 0) {
+            reader.forward(index);
         }
     }
 
@@ -325,18 +359,192 @@ public class ScannerImpl implements Scanner {
         addToken(testResultToken);
     }
 
-    private void fetchVersion(String version) {
-        // Read the token.
+    private void fetchVersion() {
         Mark startMark = reader.getMark();
-        int versionNumber = Integer.parseInt(version.substring(version
-                .lastIndexOf(' ') + 1));
-        reader.forward(version.length());
-        Mark endMark = reader.getMark();
+        // match against ^TAP\s+version\s+(\d+)\s+#(.*)
+        String tapEntry = reader.prefixForward("TAP".length());
+        char ch = '\0';
+        if (!"TAP".equals(tapEntry)) {
+            throw new ScannerException(null, null, "could not find TAP text",
+                    reader.getMark());
+        }
 
+        this.scanToNextToken();
+        String versionEntry = reader.prefixForward("version".length());
+        if (!"version".equals(versionEntry)) {
+            throw new ScannerException(null, null,
+                    "could not find version text", reader.getMark());
+        }
+
+        eatSpaces();
+        ch = reader.peek();
+        StringBuilder buffer = new StringBuilder();
+        int versionNumber = -1;
+        int index = 0;
+        if (!Constant.NULL_OR_LINEBR.has(reader.peek())) {
+            while (true) {
+                ch = reader.peek(index);
+                if (' ' != ch && !Constant.NULL_OR_LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            try {
+                versionNumber = Integer.parseInt(buffer.toString().trim());
+            } catch (NumberFormatException nfe) {
+                throw new ScannerException(null, null,
+                        "expected <number> but got <string>", reader.getMark());
+            }
+        } else {
+            throw new ScannerException(null, null,
+                    "could not find version <number>", reader.getMark());
+        }
+        reader.forward(index);
+
+        eatSpaces();
+        index = 0;
+        ch = reader.peek(index);
+        buffer = new StringBuilder();
+        String comment = "";
+        // Comment or Directive
+        if ('#' == ch) {
+            ++index;
+            while (true) {
+                ch = reader.peek(index);
+                if (!Constant.NULL_OR_LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            comment = buffer.toString().trim();
+        }
+        
+        eatSpaces();
+        if (!Constant.NULL_OR_LINEBR.has(reader.peek(index))) {
+            throw new ScannerException(null, null, "extra characters found",
+                    reader.getMark());
+        }
+
+        Mark endMark = reader.getMark();
+        AbstractToken versionToken = new VersionToken(versionNumber, comment,
+                startMark, endMark);
+        reader.forward(index);
         // Add VERSION.
-        AbstractToken token = new VersionToken(versionNumber, startMark,
-                endMark);
-        addToken(token);
+        addToken(versionToken);
+    }
+
+    private void fetchFooter() {
+        Mark startMark = reader.getMark();
+
+        // match against ^TAP\s+(?!#)(.*)\s+#(.*)
+        int index = 3;
+        String footerEntry = reader.prefix(index);
+        char ch = '\0';
+        if (!"TAP".equals(footerEntry)) {
+            throw new ScannerException("while scanning footer",
+                    reader.getMark(), "could not find footer text",
+                    reader.getMark());
+        }
+
+        ch = reader.peek(index);
+        StringBuilder buffer = new StringBuilder();
+        String description = "";
+        if (' ' == ch) {
+            while (true) {
+                ch = reader.peek(index);
+                if ('#' != ch && !Constant.NULL_OR_LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            description = buffer.toString().trim();
+        }
+
+        ch = reader.peek(index);
+        buffer = new StringBuilder();
+        String comment = "";
+        // Comment or Directive
+        if ('#' == ch) {
+            ++index;
+            while (true) {
+                ch = reader.peek(index);
+                if (!Constant.NULL_OR_LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            comment = buffer.toString().trim();
+        }
+
+        Mark endMark = reader.getMark();
+        AbstractToken footerToken;
+        footerToken = new FooterToken(description, comment, startMark, endMark);
+        reader.forward(index);
+        // Add FOOTER.
+        addToken(footerToken);
+    }
+    
+    private void fetchBailOut() {
+        Mark startMark = reader.getMark();
+
+        // match against ^Bail out!\s+(?!#)(.*)\s+#(.*)
+        String bailEntry = reader.prefixForward("Bail".length());
+        if (!"Bail".equals(bailEntry)) {
+            throw new ScannerException("while scanning footer",
+                    reader.getMark(), "could not find footer text",
+                    reader.getMark());
+        }
+        
+        eatSpaces();
+        String outEntry = reader.prefixForward("out!".length());
+        if (!"out!".equals(outEntry)) {
+            throw new ScannerException("while scanning footer",
+                    reader.getMark(), "could not find footer text",
+                    reader.getMark());
+        }
+        
+        eatSpaces();
+        int index = 0;
+        char ch = reader.peek(index);
+        StringBuilder buffer = new StringBuilder();
+        String description = "";
+        while (true) {
+            ch = reader.peek(index);
+            if ('#' != ch && !Constant.NULL_OR_LINEBR.has(ch))
+                buffer.append(ch);
+            else
+                break;
+            ++index;
+        }
+        description = buffer.toString().trim();
+
+        ch = reader.peek(index);
+        buffer = new StringBuilder();
+        String comment = "";
+        // Comment or Directive
+        if ('#' == ch) {
+            ++index;
+            while (true) {
+                ch = reader.peek(index);
+                if (!Constant.NULL_OR_LINEBR.has(ch))
+                    buffer.append(ch);
+                else
+                    break;
+                ++index;
+            }
+            comment = buffer.toString().trim();
+        }
+
+        Mark endMark = reader.getMark();
+        AbstractToken footerToken;
+        footerToken = new BailOutToken(description, comment, startMark, endMark);
+        reader.forward(index);
+        // Add BAIL-OUT.
+        addToken(footerToken);
     }
 
     // Scanners.
@@ -429,20 +637,39 @@ public class ScannerImpl implements Scanner {
         // this.indent = reader.getIndex();
     }
 
-    private String scanVersion() {
+    private boolean scanVersion() {
         String line = reader.readLine();
-        if (line.matches("^TAP\\s+version\\s+(\\d+)")) {
-            return line;
-        }
-        return "";
+        return line.matches("^TAP\\s+version\\s+(\\d+)\\s?(#.*)?");
+    }
+
+    private boolean scanFooter() {
+        String line = reader.readLine();
+        return line.matches("^TAP\\s+(.*)");
+    }
+    
+    private boolean scanBailOut() {
+        String line = reader.readLine();
+        return line.matches("^Bail out!.*");
     }
 
     public static void main(String[] args) {
-        Scanner scanner = new ScannerImpl(
-                new StreamReader(
-                        "TAP version 13\n"
-                                + "1..1\n"
-                                + "ok 1 #TODO"));
+        StringBuilder tapStream = new StringBuilder();
+
+        tapStream.append("TAP version 13 # the header\n");
+        tapStream.append("1..1\n");
+        tapStream.append("ok 1\n");
+        tapStream
+                .append("Bail out! Out of memory exception # Contact admin! 9988\n");
+        Parser parser = new TAP13Parser(new StreamReader(new StringReader(
+                tapStream.toString())));
+        Consumer consumer = new Consumer(parser);
+        TestSet testSet = consumer.getTestSet();
+        System.out.println(testSet);
+    }
+    
+    public static void main2(String[] args) {
+        Scanner scanner = new ScannerImpl(new StreamReader("TAP version 13\n"
+                + "1..1\n" + "ok 1 #TODO"));
         AbstractToken token = null;
         do {
             token = scanner.getToken();
@@ -453,8 +680,8 @@ public class ScannerImpl implements Scanner {
         } while (token != null && !(token instanceof StreamEndToken));
         System.out.println(token);
     }
-    
-    public static void main2(String[] args) {
+
+    public static void main3(String[] args) {
         Scanner scanner = new ScannerImpl(
                 new StreamReader(
                         "TAP version 14\n"
@@ -473,7 +700,7 @@ public class ScannerImpl implements Scanner {
                                 + "ok 8 #TODO not enough memory on this computer\n"
                                 + "ok 9 Hey buddy\n" + "not ok 9\r\n"
                                 + "not ok 10  y  \n" + "1..4\n" + "done\n\n"
-                        		+ "ok 11 #TODO"));
+                                + "ok 11 #TODO\n" + "TAP finished #yo"));
         AbstractToken token = null;
         do {
             token = scanner.getToken();

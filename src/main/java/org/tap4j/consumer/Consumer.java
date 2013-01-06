@@ -24,10 +24,15 @@
 
 package org.tap4j.consumer;
 
+import org.tap4j.events.BailOutEvent;
 import org.tap4j.events.Event;
+import org.tap4j.events.FooterEvent;
 import org.tap4j.events.PlanEvent;
 import org.tap4j.events.TestResultEvent;
 import org.tap4j.events.VersionEvent;
+import org.tap4j.model.BailOut;
+import org.tap4j.model.Comment;
+import org.tap4j.model.Footer;
 import org.tap4j.model.Header;
 import org.tap4j.model.Plan;
 import org.tap4j.model.StatusValues;
@@ -41,50 +46,84 @@ import org.tap4j.tokens.TestResultToken.Status;
 public class Consumer {
 
     private final Parser parser;
-    
+
     public Consumer(Parser parser) {
         this.parser = parser;
     }
-    
+
     public TestSet getTestSet() {
         // Drop STREAM-START
         parser.getEvent();
-        
+
         TestSet testSet = new TestSet();
-        
-        // VERSION
+
+        // VERSION.
         if (parser.checkEvent(Event.ID.Version)) {
             VersionEvent event = (VersionEvent) parser.getEvent();
             Header header = new Header(event.getVersion());
+            String versionComment = event.getComment();
+            if (versionComment != null && versionComment.trim().length() > 0) {
+                header.setComment(new Comment(versionComment));
+            }
             testSet.setHeader(header);
-        } 
-        
-        // PLAN
+        }
+
+        // PLAN.
         if (parser.checkEvent(Event.ID.Plan)) {
             PlanEvent event = (PlanEvent) parser.getEvent();
             // TODO: skip and todo directives... skip all?
             Plan plan = new Plan(event.getBegin(), event.getEnd());
             testSet.setPlan(plan);
         }
-        
-        // TEST-RESULTS
-        while (parser.checkEvent(Event.ID.TestResult)) {
-            TestResultEvent event = (TestResultEvent) parser.getEvent();
-            TestResult testResult = new TestResult();
-            testResult.setStatus(event.getStatus() == Status.OK ? StatusValues.OK : StatusValues.NOT_OK);
-            testResult.setDescription(event.getDescription());
-            testResult.setTestNumber(event.getNumber());
-            testSet.addTestResult(testResult);
+
+        // TEST-RESULTS.
+        while (parser.checkEvent(Event.ID.TestResult)
+                || parser.checkEvent(Event.ID.BailOut)) {
+            if (parser.checkEvent(Event.ID.TestResult)) {
+                TestResultEvent event = (TestResultEvent) parser.getEvent();
+                TestResult testResult = new TestResult();
+                testResult
+                        .setStatus(event.getStatus() == Status.OK ? StatusValues.OK
+                                : StatusValues.NOT_OK);
+                testResult.setDescription(event.getDescription());
+                testResult.setTestNumber(event.getNumber());
+                testSet.addTestResult(testResult);
+            } else if (parser.checkEvent(Event.ID.BailOut)) {
+                BailOutEvent event = (BailOutEvent) parser.getEvent();
+                BailOut bailOut = new BailOut(event.getDescription());
+                String comment = event.getComment();
+                if (comment != null && comment.trim().length() > 0) {
+                    bailOut.setComment(new Comment(comment));
+                }
+                testSet.addBailOut(bailOut);
+            }
         }
-        
+
+        // PLAN.
+        if (parser.checkEvent(Event.ID.Plan)) {
+            PlanEvent event = (PlanEvent) parser.getEvent();
+            // TODO: skip and todo directives... skip all?
+            Plan plan = new Plan(event.getBegin(), event.getEnd());
+            testSet.setPlan(plan);
+        }
+
+        // FOOTER.
+        if (parser.checkEvent(Event.ID.Footer)) {
+            FooterEvent event = (FooterEvent) parser.getEvent();
+            Footer footer = new Footer(event.getFooter());
+            String footerComment = event.getComment();
+            if (footerComment != null && footerComment.trim().length() > 0) {
+                footer.setComment(new Comment(footerComment));
+            }
+            testSet.setFooter(footer);
+        }
+
         return testSet;
     }
-    
+
     public static void main(String[] args) {
-        String stream = "TAP version 13\n" +
-        		"1..2\n" +
-        		"ok 1 no problemo bro # yah!\n" +
-        		"not ok 2";
+        String stream = "TAP version 13\n" + "1..2\n"
+                + "ok 1 no problemo bro # yah!\n" + "not ok 2";
         Parser parser = new TAP13Parser(new StreamReader(stream));
         Consumer consumer = new Consumer(parser);
         TestSet testSet = consumer.getTestSet();

@@ -26,25 +26,29 @@ package org.tap4j.tokens;
 
 import org.tap4j.error.Mark;
 
-public class VersionToken extends AbstractToken {
+public class FooterToken extends AbstractToken {
 
-    private final int version;
+    private final String footer;
     private final String comment;
 
-    public VersionToken(int version, String comment, Mark startMark,
+    /**
+     * @param footer
+     * @param comment
+     * @param startMark
+     * @param endMark
+     */
+    public FooterToken(String footer, String comment, Mark startMark,
             Mark endMark) {
         super(startMark, endMark);
-        this.version = version;
+        this.footer = footer;
         this.comment = comment;
     }
 
-    @Override
-    public ID getTokenId() {
-        return ID.Version;
-    }
-
-    public int getVersion() {
-        return version;
+    /**
+     * @return the footer
+     */
+    public String getFooter() {
+        return footer;
     }
 
     /**
@@ -61,7 +65,17 @@ public class VersionToken extends AbstractToken {
      */
     @Override
     protected String getArguments() {
-        return "version=" + version + ", comment=" + comment;
+        return "footer=" + footer + ", comment=" + comment;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.tokens.AbstractToken#getTokenId()
+     */
+    @Override
+    public ID getTokenId() {
+        return ID.Footer;
     }
 
 }

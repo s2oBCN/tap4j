@@ -22,29 +22,30 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.tokens;
+package org.tap4j.events;
 
 import org.tap4j.error.Mark;
 
-public class VersionToken extends AbstractToken {
-
-    private final int version;
+public class BailOutEvent extends Event {
+    private final String description;
     private final String comment;
 
-    public VersionToken(int version, String comment, Mark startMark,
+    /**
+     * @param startMark
+     * @param endMark
+     */
+    public BailOutEvent(String description, String comment, Mark startMark,
             Mark endMark) {
         super(startMark, endMark);
-        this.version = version;
+        this.description = description;
         this.comment = comment;
     }
 
-    @Override
-    public ID getTokenId() {
-        return ID.Version;
-    }
-
-    public int getVersion() {
-        return version;
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**
@@ -57,11 +58,16 @@ public class VersionToken extends AbstractToken {
     /*
      * (non-Javadoc)
      * 
-     * @see org.tap4j.tokens.AbstractToken#getArguments()
+     * @see org.tap4j.events.Event#getArguments()
      */
     @Override
     protected String getArguments() {
-        return "version=" + version + ", comment=" + comment;
+        return "description=" + getDescription() + ", comment=" + getComment();
+    }
+
+    @Override
+    public boolean is(ID id) {
+        return ID.BailOut == id;
     }
 
 }

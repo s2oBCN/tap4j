@@ -29,7 +29,7 @@ import org.tap4j.error.TAPException;
 
 public abstract class AbstractToken implements Token {
     public enum ID {
-        Comment, LineBreak, Plan, StreamEnd, StreamStart, Version, TestResult, Unknown
+        BailOut, Comment, Footer, LineBreak, Plan, StreamEnd, StreamStart, Version, TestResult, Unknown
     }
 
     private final Mark startMark;

@@ -26,25 +26,29 @@ package org.tap4j.tokens;
 
 import org.tap4j.error.Mark;
 
-public class VersionToken extends AbstractToken {
+public class BailOutToken extends AbstractToken {
 
-    private final int version;
+    private final String description;
     private final String comment;
 
-    public VersionToken(int version, String comment, Mark startMark,
+    /**
+     * @param description
+     * @param comment
+     * @param startMark
+     * @param endMark
+     */
+    public BailOutToken(String description, String comment, Mark startMark,
             Mark endMark) {
         super(startMark, endMark);
-        this.version = version;
+        this.description = description;
         this.comment = comment;
     }
 
-    @Override
-    public ID getTokenId() {
-        return ID.Version;
-    }
-
-    public int getVersion() {
-        return version;
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**
@@ -61,7 +65,17 @@ public class VersionToken extends AbstractToken {
      */
     @Override
     protected String getArguments() {
-        return "version=" + version + ", comment=" + comment;
+        return "description=" + getDescription() + ", comment=" + getComment();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.tap4j.tokens.AbstractToken#getTokenId()
+     */
+    @Override
+    public ID getTokenId() {
+        return ID.BailOut;
     }
 
 }

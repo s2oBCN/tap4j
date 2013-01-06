@@ -29,16 +29,19 @@ import org.tap4j.error.Mark;
 public class VersionEvent extends Event {
 
     private final int version;
-    
+    private final String comment;
+
     /**
      * @param startMark
      * @param endMark
      */
-    public VersionEvent(int version, Mark startMark, Mark endMark) {
+    public VersionEvent(int version, String comment, Mark startMark,
+            Mark endMark) {
         super(startMark, endMark);
         this.version = version;
+        this.comment = comment;
     }
-    
+
     /**
      * @return the version
      */
@@ -46,20 +49,31 @@ public class VersionEvent extends Event {
         return version;
     }
 
-    /* (non-Javadoc)
+    /**
+     * @return the comment
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tap4j.events.Event#is(org.tap4j.events.Event.ID)
      */
     @Override
     public boolean is(ID id) {
         return ID.Version == id;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.tap4j.events.Event#getArguments()
      */
     @Override
     protected String getArguments() {
-        return "version=" + getVersion();
+        return "version=" + getVersion() + ", comment=" + getComment();
     }
 
 }

@@ -22,46 +22,45 @@
  * THE SOFTWARE.
  */
 
-package org.tap4j.tokens;
+package org.tap4j.consumer;
 
-import org.tap4j.error.Mark;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 
-public class VersionToken extends AbstractToken {
+import org.tap4j.model.TestSet;
+import org.tap4j.parser.TAP13Parser;
+import org.tap4j.reader.StreamReader;
 
-    private final int version;
-    private final String comment;
-
-    public VersionToken(int version, String comment, Mark startMark,
-            Mark endMark) {
-        super(startMark, endMark);
-        this.version = version;
-        this.comment = comment;
-    }
-
-    @Override
-    public ID getTokenId() {
-        return ID.Version;
-    }
-
-    public int getVersion() {
-        return version;
-    }
+/**
+ * Base class for consumer tests.
+ */
+public abstract class BaseConsumerTest {
 
     /**
-     * @return the comment
+     * Get a file reader from a file name. The file is loaded using the current
+     * class to get the file as a resource.
+     * 
+     * @param fileName File name.
+     * @return FileReader.
+     * @throws RuntimeException when it could not get the reader.
      */
-    public String getComment() {
-        return comment;
+    protected FileReader getFileReader(String fileName) {
+        FileReader reader;
+        try {
+            reader = new FileReader(getClass().getResource(fileName).getFile());
+            return reader;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException("Failed to get reader for [" + fileName
+                + "]");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.tap4j.tokens.AbstractToken#getArguments()
-     */
-    @Override
-    protected String getArguments() {
-        return "version=" + version + ", comment=" + comment;
+    protected TestSet getTestSet(String fileName) {
+        FileReader reader = getFileReader(fileName);
+        Consumer consumer = new Consumer(new TAP13Parser(new StreamReader(
+                reader)));
+        return consumer.getTestSet();
     }
 
 }

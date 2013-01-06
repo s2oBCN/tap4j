@@ -24,8 +24,10 @@
 
 package org.tap4j.parser;
 
+import org.tap4j.events.BailOutEvent;
 import org.tap4j.events.Event;
 import org.tap4j.events.Event.ID;
+import org.tap4j.events.FooterEvent;
 import org.tap4j.events.PlanEvent;
 import org.tap4j.events.StreamEndEvent;
 import org.tap4j.events.StreamStartEvent;
@@ -35,6 +37,8 @@ import org.tap4j.reader.StreamReader;
 import org.tap4j.scanner.Scanner;
 import org.tap4j.scanner.ScannerImpl;
 import org.tap4j.tokens.AbstractToken;
+import org.tap4j.tokens.BailOutToken;
+import org.tap4j.tokens.FooterToken;
 import org.tap4j.tokens.PlanToken;
 import org.tap4j.tokens.StreamEndToken;
 import org.tap4j.tokens.StreamStartToken;
@@ -113,11 +117,15 @@ public class TAP13Parser implements Parser {
                 state = new ParsePlan(/* beginning */true);
             } else if (scanner.checkToken(AbstractToken.ID.TestResult)) {
                 state = new ParseTestResult();
+            } else if (scanner.checkToken(AbstractToken.ID.BailOut)) {
+                state = new ParseBailOut();
             } else if (!scanner.checkToken(AbstractToken.ID.StreamEnd)) {
                 throw new ParserException(null, null,
                         "expected '<version>, <plan> or <test result>', but found "
                                 + scanner.peekToken().getTokenId(), scanner
                                 .peekToken().getStartMark());
+            } else if (scanner.checkToken(AbstractToken.ID.Footer)) {
+                state = new ParseFooter();
             } else {
                 state = new ParseStreamEnd();
             }
@@ -145,7 +153,8 @@ public class TAP13Parser implements Parser {
         public Event produce() {
             VersionToken token = (VersionToken) scanner.getToken();
             Event event = new VersionEvent(token.getVersion(),
-                    token.getStartMark(), token.getEndMark());
+                    token.getComment(), token.getStartMark(),
+                    token.getEndMark());
             if (scanner.checkToken(AbstractToken.ID.Plan)) {
                 state = new ParsePlan(true);
             } else {
@@ -165,7 +174,7 @@ public class TAP13Parser implements Parser {
         public Event produce() {
             PlanToken token = (PlanToken) scanner.getToken();
             if (planSet) {
-                throw new ParserException(null, null, 
+                throw new ParserException(null, null,
                         "found '<plan>' defined twice", token.getStartMark());
             }
             planSet = true;
@@ -173,6 +182,10 @@ public class TAP13Parser implements Parser {
                     token.getStartMark(), token.getEndMark());
             if (beginning && scanner.peekToken() instanceof TestResultToken) {
                 state = new ParseTestResult();
+            } else if (scanner.checkToken(AbstractToken.ID.BailOut)) {
+                state = new ParseBailOut();
+            } else if (scanner.peekToken() instanceof FooterToken) {
+                state = new ParseFooter();
             } else {
                 state = new ParseStreamEnd();
             }
@@ -189,8 +202,42 @@ public class TAP13Parser implements Parser {
                     token.getStartMark(), token.getEndMark());
             if (scanner.checkToken(AbstractToken.ID.TestResult)) {
                 state = new ParseTestResult();
-            } else if(scanner.checkToken(AbstractToken.ID.Plan)) {
+            } else if (scanner.checkToken(AbstractToken.ID.Plan)) {
                 state = new ParsePlan(false);
+            } else if (scanner.checkToken(AbstractToken.ID.BailOut)) {
+                state = new ParseBailOut();
+            } else if (scanner.checkToken(AbstractToken.ID.Footer)) {
+                state = new ParseFooter();
+            } else {
+                state = new ParseStreamEnd();
+            }
+            return event;
+        }
+    }
+
+    private class ParseFooter implements Production {
+        public Event produce() {
+            FooterToken token = (FooterToken) scanner.getToken();
+            Event event = new FooterEvent(token.getFooter(),
+                    token.getComment(), token.getStartMark(),
+                    token.getEndMark());
+            state = new ParseStreamEnd();
+            return event;
+        }
+    }
+
+    private class ParseBailOut implements Production {
+        public Event produce() {
+            BailOutToken token = (BailOutToken) scanner.getToken();
+            Event event = new BailOutEvent(token.getDescription(),
+                    token.getComment(), token.getStartMark(),
+                    token.getEndMark());
+            if (scanner.checkToken(AbstractToken.ID.TestResult)) {
+                state = new ParseTestResult();
+            } else if (scanner.checkToken(AbstractToken.ID.Plan)) {
+                state = new ParsePlan(false);
+            } else if (scanner.checkToken(AbstractToken.ID.Footer)) {
+                state = new ParseFooter();
             } else {
                 state = new ParseStreamEnd();
             }
@@ -200,11 +247,9 @@ public class TAP13Parser implements Parser {
 
     public static void main(String[] args) throws Exception {
         String tap = "# a comment before the version... dan dan dan dannn...\n"
-                        + "TAP version 13\n" 
-                        + "1..2\n"
-                        + "ok 1 nope\n" 
-                        + "not ok 2 #SKIP yo # d\n"
-                        + "ok 3 #TODO enhance it\n";
+                + "TAP version 13\n" + "1..2\n" + "ok 1 nope\n"
+                + "not ok 2 #SKIP yo # d\n" + "ok 3 #TODO enhance it\n"
+                + "TAP nothing\n";
         StreamReader reader = new StreamReader(tap);
         Parser parser = new TAP13Parser(reader);
         Event event = null;
