@@ -39,6 +39,7 @@ import org.tap4j.model.StatusValues;
 import org.tap4j.model.TestResult;
 import org.tap4j.model.TestSet;
 import org.tap4j.parser.Parser;
+import org.tap4j.parser.ParserException;
 import org.tap4j.parser.TAP13Parser;
 import org.tap4j.reader.StreamReader;
 import org.tap4j.tokens.TestResultToken.Status;
@@ -46,79 +47,96 @@ import org.tap4j.tokens.TestResultToken.Status;
 public class Consumer {
 
     private final Parser parser;
+    private final ConsumerOptions options;
 
     public Consumer(Parser parser) {
+        this(parser, new ConsumerOptions());
+    }
+
+    public Consumer(Parser parser, ConsumerOptions options) {
         this.parser = parser;
+        this.options = options;
     }
 
     public TestSet getTestSet() {
-        // Drop STREAM-START
-        parser.getEvent();
+        try {
+            // Drop STREAM-START
+            parser.getEvent();
 
-        TestSet testSet = new TestSet();
+            TestSet testSet = new TestSet();
 
-        // VERSION.
-        if (parser.checkEvent(Event.ID.Version)) {
-            VersionEvent event = (VersionEvent) parser.getEvent();
-            Header header = new Header(event.getVersion());
-            String versionComment = event.getComment();
-            if (versionComment != null && versionComment.trim().length() > 0) {
-                header.setComment(new Comment(versionComment));
-            }
-            testSet.setHeader(header);
-        }
-
-        // PLAN.
-        if (parser.checkEvent(Event.ID.Plan)) {
-            PlanEvent event = (PlanEvent) parser.getEvent();
-            // TODO: skip and todo directives... skip all?
-            Plan plan = new Plan(event.getBegin(), event.getEnd());
-            testSet.setPlan(plan);
-        }
-
-        // TEST-RESULTS.
-        while (parser.checkEvent(Event.ID.TestResult)
-                || parser.checkEvent(Event.ID.BailOut)) {
-            if (parser.checkEvent(Event.ID.TestResult)) {
-                TestResultEvent event = (TestResultEvent) parser.getEvent();
-                TestResult testResult = new TestResult();
-                testResult
-                        .setStatus(event.getStatus() == Status.OK ? StatusValues.OK
-                                : StatusValues.NOT_OK);
-                testResult.setDescription(event.getDescription());
-                testResult.setTestNumber(event.getNumber());
-                testSet.addTestResult(testResult);
-            } else if (parser.checkEvent(Event.ID.BailOut)) {
-                BailOutEvent event = (BailOutEvent) parser.getEvent();
-                BailOut bailOut = new BailOut(event.getDescription());
-                String comment = event.getComment();
-                if (comment != null && comment.trim().length() > 0) {
-                    bailOut.setComment(new Comment(comment));
+            // VERSION.
+            if (parser.checkEvent(Event.ID.Version)) {
+                VersionEvent event = (VersionEvent) parser.getEvent();
+                Header header = new Header(event.getVersion());
+                String versionComment = event.getComment();
+                if (versionComment != null
+                        && versionComment.trim().length() > 0) {
+                    header.setComment(new Comment(versionComment));
                 }
-                testSet.addBailOut(bailOut);
+                testSet.setHeader(header);
             }
-        }
 
-        // PLAN.
-        if (parser.checkEvent(Event.ID.Plan)) {
-            PlanEvent event = (PlanEvent) parser.getEvent();
-            // TODO: skip and todo directives... skip all?
-            Plan plan = new Plan(event.getBegin(), event.getEnd());
-            testSet.setPlan(plan);
-        }
-
-        // FOOTER.
-        if (parser.checkEvent(Event.ID.Footer)) {
-            FooterEvent event = (FooterEvent) parser.getEvent();
-            Footer footer = new Footer(event.getFooter());
-            String footerComment = event.getComment();
-            if (footerComment != null && footerComment.trim().length() > 0) {
-                footer.setComment(new Comment(footerComment));
+            // PLAN.
+            if (parser.checkEvent(Event.ID.Plan)) {
+                PlanEvent event = (PlanEvent) parser.getEvent();
+                // TODO: skip and todo directives... skip all?
+                Plan plan = new Plan(event.getBegin(), event.getEnd());
+                testSet.setPlan(plan);
             }
-            testSet.setFooter(footer);
-        }
 
-        return testSet;
+            // TEST-RESULTS.
+            while (parser.checkEvent(Event.ID.TestResult)
+                    || parser.checkEvent(Event.ID.BailOut)) {
+                if (parser.checkEvent(Event.ID.TestResult)) {
+                    TestResultEvent event = (TestResultEvent) parser.getEvent();
+                    TestResult testResult = new TestResult();
+                    testResult
+                            .setStatus(event.getStatus() == Status.OK ? StatusValues.OK
+                                    : StatusValues.NOT_OK);
+                    testResult.setDescription(event.getDescription());
+                    testResult.setTestNumber(event.getNumber());
+                    testSet.addTestResult(testResult);
+                } else if (parser.checkEvent(Event.ID.BailOut)) {
+                    BailOutEvent event = (BailOutEvent) parser.getEvent();
+                    BailOut bailOut = new BailOut(event.getDescription());
+                    String comment = event.getComment();
+                    if (comment != null && comment.trim().length() > 0) {
+                        bailOut.setComment(new Comment(comment));
+                    }
+                    testSet.addBailOut(bailOut);
+                }
+            }
+
+            // PLAN.
+            if (parser.checkEvent(Event.ID.Plan)) {
+                PlanEvent event = (PlanEvent) parser.getEvent();
+                // TODO: skip and todo directives... skip all?
+                Plan plan = new Plan(event.getBegin(), event.getEnd());
+                testSet.setPlan(plan);
+            }
+
+            // FOOTER.
+            if (parser.checkEvent(Event.ID.Footer)) {
+                FooterEvent event = (FooterEvent) parser.getEvent();
+                Footer footer = new Footer(event.getFooter());
+                String footerComment = event.getComment();
+                if (footerComment != null && footerComment.trim().length() > 0) {
+                    footer.setComment(new Comment(footerComment));
+                }
+                testSet.setFooter(footer);
+            }
+            
+            if (options.<Boolean>getOption(ConsumerOptions.KEY.REQUIRE_PLAN) == Boolean.TRUE) {
+                if (testSet.getPlan() == null) {
+                    throw new ConsumerException(null, null, "Missing required <plan> in your TAP stream", null);
+                }
+            }
+
+            return testSet;
+        } catch (ParserException pe) {
+            throw new ConsumerException(pe);
+        }
     }
 
     public static void main(String[] args) {

@@ -28,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.StringReader;
 
@@ -154,9 +155,83 @@ public class TestConsumer extends BaseConsumerTest {
         assertTrue(testSet.getPlan().getLastTestNumber() == 1);
         assertNotNull(testSet.getHeader());
         assertNotNull(testSet.getHeader().getComment());
-        assertEquals("Out of memory exception", testSet.getBailOuts().get(0).getReason());
-        assertEquals("Contact admin! 9988", testSet.getBailOuts().get(0).getComment().getText());
+        assertEquals("Out of memory exception", testSet.getBailOuts().get(0)
+                .getReason());
+        assertEquals("Contact admin! 9988", testSet.getBailOuts().get(0)
+                .getComment().getText());
+    }
 
+    // invalid streams.
+
+    // invalid_comment_tr_bailout_header.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidCommentTrBailoutHeader() {
+        getTestSet("invalid_comment_tr_bailout_header.tap");
+        fail("Not supposed to get here");
+    }
+
+    // invalid_header_tr.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidHeaderTr() {
+        Parser parser = new TAP13Parser(new StreamReader(
+                getFileReader("invalid_header_tr.tap")));
+        ConsumerOptions options = new ConsumerOptions();
+        options.<Boolean> setOption(ConsumerOptions.KEY.REQUIRE_PLAN,
+                Boolean.TRUE);
+        Consumer consumer = new Consumer(parser, options);
+        consumer.getTestSet();
+        fail("Not supposed to get here");
+    }
+
+    // invalid_plan_header_plan.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidPlanHeaderPlan() {
+        getTestSet("invalid_plan_header_plan.tap");
+        fail("Not supposed to get here");
+    }
+
+    // invalid_plan_tr_header.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidPlanTrHeader() {
+        getTestSet("invalid_plan_tr_header.tap");
+        fail("Not supposed to get here");
+    }
+
+    // invalid_tr_footer.tap
+    // This test was removed, since this header is actually identified either 
+    // as unknown token and treated separatedly or as a TAP footer. 
+    // In both cases, it is a valid case.
+//    @Test(expected = ConsumerException.class)
+//    public void testConsumerInvalidTrFooter() {
+//        getTestSet("invalid_tr_footer.tap");
+//        fail("Not supposed to get here");
+//    }
+
+    // invalid_tr_header_header_tr.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidTrHeaderHeaderTr() {
+        getTestSet("invalid_tr_header_header_tr.tap");
+        fail("Not supposed to get here");
+    }
+
+    // invalid_tr_plan_header.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidTrPlanHeader() {
+        getTestSet("invalid_tr_plan_header.tap");
+        fail("Not supposed to get here");
+    }
+
+    // invalid_tr.tap
+    @Test(expected = ConsumerException.class)
+    public void testConsumerInvalidTr() {
+        Parser parser = new TAP13Parser(new StreamReader(
+                getFileReader("invalid_tr.tap")));
+        ConsumerOptions options = new ConsumerOptions();
+        options.<Boolean> setOption(ConsumerOptions.KEY.REQUIRE_PLAN,
+                Boolean.TRUE);
+        Consumer consumer = new Consumer(parser, options);
+        consumer.getTestSet();
+        fail("Not supposed to get here");
     }
 
 }

@@ -24,19 +24,36 @@
 
 package org.tap4j.consumer;
 
-import org.tap4j.error.Mark;
-import org.tap4j.error.MarkedTAPException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ConsumerException extends MarkedTAPException {
-    private static final long serialVersionUID = 9007324235147350787L;
+public final class ConsumerOptions {
 
-    protected ConsumerException(String context, Mark contextMark,
-            String problem, Mark problemMark) {
-        super(context, contextMark, problem, problemMark);
+    public enum KEY {
+        REQUIRE_PLAN
     }
 
-    protected ConsumerException(MarkedTAPException e) {
-        super(e.getContext(), e.getContextMark(), e.getProblem(), e
-                .getProblemMark());
+    private final Map<KEY, Object> props;
+
+    public ConsumerOptions() {
+        super();
+        this.props = defaults(new HashMap<KEY, Object>());
     }
+
+    private Map<KEY, Object> defaults(Map<KEY, Object> map) {
+        return (Map<KEY, Object>) map;
+    }
+
+    public <T> void setOption(KEY option, T value) {
+        this.props.put(option, value);
+    }
+
+    // Since we have many different option types in the props map
+    // we give the users this choice to decide on the option type
+    // at their own risk.
+    @SuppressWarnings("unchecked")
+    public <T> T getOption(KEY option) {
+        return (T) this.props.get(option);
+    }
+
 }

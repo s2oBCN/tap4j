@@ -31,7 +31,6 @@ import java.util.Iterator;
 
 import org.tap4j.consumer.Consumer;
 import org.tap4j.events.Event;
-import org.tap4j.events.Event.ID;
 import org.tap4j.model.TestSet;
 import org.tap4j.parser.Parser;
 import org.tap4j.parser.TAP13Parser;
