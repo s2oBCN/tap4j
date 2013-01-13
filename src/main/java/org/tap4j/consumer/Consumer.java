@@ -96,6 +96,10 @@ public class Consumer {
                                     : StatusValues.NOT_OK);
                     testResult.setDescription(event.getDescription());
                     testResult.setTestNumber(event.getNumber());
+                    if (event.getComment() != null && event.getComment().trim().length() > 0) {
+                        Comment comment = new Comment(event.getComment());
+                        testResult.addComment(comment);
+                    }
                     testSet.addTestResult(testResult);
                 } else if (parser.checkEvent(Event.ID.BailOut)) {
                     BailOutEvent event = (BailOutEvent) parser.getEvent();

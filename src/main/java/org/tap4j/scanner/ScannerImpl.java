@@ -53,6 +53,9 @@ import org.tap4j.tokens.VersionToken;
 
 public class ScannerImpl implements Scanner {
 
+    private static final String REGEX_PLAN = "(?:\\s*)(\\d+)(\\.{2})(\\d+)(?:\\s*)(#\\s*skip\\s*([^#]+))?(?:\\s*)(#\\s*(.*))?";
+    private static final String REGEX_TEST_RESULT = "(?:\\s*)(ok|not ok)(?:\\s*)(\\d*)(?:\\s*)([^#]+)?(?:\\s*)(#\\s*SKIP\\s*([^#]+))?(#\\s*TODO\\s*([^#]+))?(#\\s*(.*))?";
+    
     private final StreamReader reader;
     private List<AbstractToken> tokens;
     // private Stack<Integer> indents;
@@ -246,115 +249,24 @@ public class ScannerImpl implements Scanner {
         // The stream is finished.
         this.done = true;
     }
-
+    
+    //(?:\\s*)(ok|not ok)(?:\\s*)(\\d*)(?:\\s*)([^#]+)?(?:\\s*)(#\\s*SKIP\\s*([^#]+))?(#\\s*TODO\\s*([^#]+))?(#\\s*(.*))?
     private void fetchTestResult() {
         Mark startMark = reader.getMark();
-
-        // match against ^(ok|not ok)\s+\d*.*
-        int index = 2;
-        String statusText = reader.prefix(index);
-        char ch = '\0';
-        boolean flag = false;
-        if (!"ok".equals(statusText)) {
-            index = 6;
-            statusText = reader.prefix(index);
-            if (!"not ok".equals(statusText)) {
-                throw new ScannerException("while scanning a test result",
-                        reader.getMark(), "could not find test status",
-                        reader.getMark());
-            }
-        }
-        Status status = "ok".equals(statusText) ? Status.OK : Status.NOT_OK;
-
-        ch = reader.peek(index);
-        StringBuilder buffer = new StringBuilder();
-        final int number;
-        if (' ' == ch) {
-            while (true) {
-                ++index;
-                ch = reader.peek(index);
-                if (' ' == ch || Constant.NULL_OR_LINEBR.has(ch)) {
-                    if (!flag)
-                        continue;
-                    else
-                        break;
-                }
-                flag = true;
-                buffer.append(ch);
-            }
-            String r = buffer.toString();
-            if (r.length() > 0) {
-                try {
-                    number = Integer.parseInt(r);
-                } catch (NumberFormatException nfe) {
-                    throw new ScannerException("while scanning a test result",
-                            reader.getMark(), "could not find test number",
-                            reader.getMark());
-                }
-            } else {
-                throw new ScannerException("while scanning a test result",
-                        reader.getMark(), "invalid test result",
-                        reader.getMark());
-            }
-        } else {
-            throw new ScannerException("while scanning a test result",
-                    reader.getMark(), "could not find test number",
-                    reader.getMark());
-        }
-
-        ch = reader.peek(index);
-        buffer = new StringBuilder();
-        String description = "";
-        if (' ' == ch) {
-            while (true) {
-                ch = reader.peek(index);
-                if ('#' != ch && !Constant.LINEBR.has(ch))
-                    buffer.append(ch);
-                else
-                    break;
-                ++index;
-            }
-            description = buffer.toString().trim();
-        }
-
-        ch = reader.peek(index);
-        buffer = new StringBuilder();
-        String comment = "";
-        Skip skip = null;
-        Todo todo = null;
-        // Comment or Directive
-        if ('#' == ch) {
-            while (true) {
-                ch = reader.peek(index);
-                if (!Constant.NULL_OR_LINEBR.has(ch))
-                    buffer.append(ch);
-                else
-                    break;
-                ++index;
-            }
-            final String r = buffer.toString().trim();
-            if (r.matches("\\s?#\\s?SKIP.*")) {
-                Pattern pattern = Pattern.compile("\\s?#\\s?SKIP(.*)");
-                Matcher matcher = pattern.matcher(r);
-                if (matcher.matches() && matcher.groupCount() >= 1) {
-                    skip = new Skip(matcher.group(1).trim());
-                }
-            } else if (r.matches("\\s?#\\s?TODO.*")) {
-                Pattern pattern = Pattern.compile("\\s?#\\s?TODO(.*)");
-                Matcher matcher = pattern.matcher(r);
-                if (matcher.matches() && matcher.groupCount() >= 1) {
-                    todo = new Todo(matcher.group(1).trim());
-                }
-            } else {
-                comment = buffer.toString().trim();
-            }
-        }
+        String line = reader.readLineForward();
+        Matcher m = Pattern.compile(REGEX_TEST_RESULT).matcher(line);
+        // match against ^(ok|not ok)\s+\d*.*x
+        Status status = "ok".equals(m.group(1)) ? Status.OK : Status.NOT_OK;
+        int number = Integer.parseInt(m.group(2));
+        String description = m.group(3);
+        Skip skip = new Skip(m.group(4));
+        Todo todo = new Todo(m.group(5));
+        String comment = m.group(5);
 
         Mark endMark = reader.getMark();
         AbstractToken testResultToken;
         testResultToken = new TestResultToken(status, number, description,
                 comment, skip, todo, startMark, endMark);
-        reader.forward(index);
         // Add TEST-RESULT.
         addToken(testResultToken);
     }
@@ -658,13 +570,12 @@ public class ScannerImpl implements Scanner {
         tapStream.append("TAP version 13 # the header\n");
         tapStream.append("1..1\n");
         tapStream.append("ok 1\n");
-        tapStream
-                .append("Bail out! Out of memory exception # Contact admin! 9988\n");
+        tapStream.append("# comment\n");
         Parser parser = new TAP13Parser(new StreamReader(new StringReader(
                 tapStream.toString())));
         Consumer consumer = new Consumer(parser);
         TestSet testSet = consumer.getTestSet();
-        System.out.println(testSet);
+        System.out.println(testSet.getComments());
     }
     
     public static void main2(String[] args) {
