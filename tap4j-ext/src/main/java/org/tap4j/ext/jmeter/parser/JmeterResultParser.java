@@ -46,7 +46,7 @@ public class JmeterResultParser {
 	private static final Integer TAP_VERSION = 13;
 	private static final Integer INITIAL_TEST_STEP = 1;
 	private static final CharSequence XML_EXT = ".xml";
-	private static final CharSequence TAP_EXT = ".tap";
+	public static final CharSequence TAP_EXT = ".tap";
 	private static final String FAILURE_MESSAGE = "- FailureMessage:";
 	private static final String FAIL_ASSERT = "failAssert ";
 	private static final String ERROR = "error ";
@@ -54,6 +54,12 @@ public class JmeterResultParser {
 	private static final String SEVERITY = "severity";
 	private static final String MESSAGE = "message";
 	public static final String VALUE_SPLIT = " - ";
+
+	/**
+	 * Line separator.
+	 */
+	private static final CharSequence LINE_SEPARATOR = " \r\n \r\n";
+
 	private Charset charset;
 
 	public JmeterResultParser() {
@@ -143,7 +149,7 @@ public class JmeterResultParser {
 			results = (TestResults) unmarshaller.unmarshal(reader);
 
 		} catch (JAXBException jAXBException) {
-			throw new ParserException("Exception on parse xml", jAXBException);
+			throw new ParserException("Exception on parse xml of file:" + file, jAXBException);
 		} catch (FileNotFoundException fileNotFoundException) {
 			throw new ParserException("XML file not found: " + file, fileNotFoundException);
 		}
@@ -178,7 +184,7 @@ public class JmeterResultParser {
 	 */
 	private void generateTapFile(File file, TestSet testSet) {
 		String fileName = file.getAbsolutePath();
-		String tapFileName = fileName.replace(XML_EXT, TAP_EXT);
+		String tapFileName = fileName + TAP_EXT;
 
 		DumperOptions options = new DumperOptions();
 		options.setPrintDiagnostics(true);
@@ -219,10 +225,36 @@ public class JmeterResultParser {
 	 */
 	private void createYAMLishDump(Map<String, Object> yamlish, AbstractSample httpSample) {
 		String dump = "";
-		if (httpSample instanceof HttpSample) {
-			dump = ((HttpSample) httpSample).getResponseData().getValue();
+		if (httpSample instanceof HttpSample && httpSample != null) {
+			dump = dump + requestHeader((HttpSample) httpSample);
+			dump = dump + queryString((HttpSample) httpSample);
+			dump = dump + response((HttpSample) httpSample);
+			dump = dump.replaceAll("(?<=<data>)(.*?)(?=</data>)", "...");
+			dump = dump.replaceAll("(?<=<binaryContent>)(.*?)(?=</binaryContent>)", "...");
 		}
-
 		yamlish.put(DUMP, dump);
+	}
+
+	private String requestHeader(HttpSample httpSample) {
+		String dump = "requestHeader: ";
+		if (httpSample.getRequestHeader() != null) {
+			dump = dump + httpSample.getRequestHeader().getValue() + LINE_SEPARATOR;
+		}
+		return dump;
+	}
+
+	private String queryString(HttpSample httpSample) {
+		String dump = "queryString: ";
+		if (httpSample.getQueryString() != null) {
+			dump = dump + httpSample.getQueryString().getValue() + LINE_SEPARATOR;
+		}
+		return dump;
+	}
+	private String response(HttpSample httpSample) {
+		String dump = "response: ";
+		if (httpSample.getResponseData() != null) {
+			dump = dump + httpSample.getResponseData().getValue() + LINE_SEPARATOR;
+		}
+		return dump;
 	}
 }
