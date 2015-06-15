@@ -1,39 +1,17 @@
 package org.tap4j.ext.jmeter.parser;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 
 import org.tap4j.ext.jmeter.model.AbstractSample;
 import org.tap4j.ext.jmeter.model.AssertionResult;
 import org.tap4j.ext.jmeter.model.HttpSample;
-import org.tap4j.ext.jmeter.model.ObjectFactory;
-import org.tap4j.ext.jmeter.model.TestResults;
 import org.tap4j.model.Header;
 import org.tap4j.model.Plan;
 import org.tap4j.model.TestResult;
 import org.tap4j.model.TestSet;
-import org.tap4j.parser.ParserException;
-import org.tap4j.producer.Producer;
-import org.tap4j.producer.TapProducerFactory;
-import org.tap4j.representer.DumperOptions;
 import org.tap4j.util.StatusValues;
 
 /**
@@ -45,8 +23,7 @@ public class JmeterResultParser {
 
 	private static final Integer TAP_VERSION = 13;
 	private static final Integer INITIAL_TEST_STEP = 1;
-	private static final CharSequence XML_EXT = ".xml";
-	public static final CharSequence TAP_EXT = ".tap";
+
 	private static final String FAILURE_MESSAGE = "- FailureMessage:";
 	private static final String FAIL_ASSERT = "failAssert ";
 	private static final String ERROR = "error ";
@@ -55,12 +32,7 @@ public class JmeterResultParser {
 	private static final String MESSAGE = "message";
 	public static final String VALUE_SPLIT = " - ";
 
-	/**
-	 * Line separator.
-	 */
-	private static final CharSequence LINE_SEPARATOR = " \r\n \r\n";
-
-	private Charset charset;
+	private final Charset charset;
 
 	public JmeterResultParser() {
 		charset = Charset.defaultCharset();
@@ -82,8 +54,9 @@ public class JmeterResultParser {
 		TestSet testSet = new TestSet();
 		final Header header = new Header(TAP_VERSION);
 		testSet.setHeader(header);
-
-		List<AbstractSample> sampleResultList = getResultList(file);
+		FileUtils fileUtils = new FileUtils(charset);
+		File fileScaped = fileUtils.replaceFileHTMLSpecialChars(file);
+		List<AbstractSample> sampleResultList = fileUtils.getResultList(fileScaped);
 		Plan plan = new Plan(INITIAL_TEST_STEP, sampleResultList.size());
 		testSet.setPlan(plan);
 
@@ -123,84 +96,10 @@ public class JmeterResultParser {
 		}
 
 		if (generateTapFile) {
-			generateTapFile(file, testSet);
+			fileUtils.generateTapFile(file, testSet);
 		}
 
 		return testSet;
-	}
-
-	/**
-	 * @param file
-	 * @return
-	 * @throws FileNotFoundException
-	 * @throws JAXBException
-	 * @throws IOException
-	 */
-	private List<AbstractSample> getResultList(File file) {
-		TestResults results = new TestResults();
-		InputStream inputStream = null;
-		Reader reader = null;
-		try {
-			inputStream = new FileInputStream(file);
-			reader = new InputStreamReader(inputStream, charset);
-
-			JAXBContext jc = JAXBContext.newInstance(ObjectFactory.class);
-			Unmarshaller unmarshaller = jc.createUnmarshaller();
-			results = (TestResults) unmarshaller.unmarshal(reader);
-
-		} catch (JAXBException jAXBException) {
-			throw new ParserException("Exception on parse xml of file:" + file, jAXBException);
-		} catch (FileNotFoundException fileNotFoundException) {
-			throw new ParserException("XML file not found: " + file, fileNotFoundException);
-		}
-
-		try {
-			if (reader != null) {
-				reader.close();
-			}
-			if (inputStream != null) {
-				inputStream.close();
-			}
-		} catch (IOException e) {
-			throw new ParserException("Error IOException: " + e.getMessage(), e);
-		}
-
-		List<AbstractSample> sampleResultList = null;
-		if (results == null) {
-			sampleResultList = new ArrayList<AbstractSample>();
-		} else {
-			sampleResultList = results.getHttpSampleOrSample();
-		}
-
-		return sampleResultList;
-	}
-
-	/**
-	 * @param file
-	 * @param testSet
-	 * @throws UnsupportedEncodingException
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 */
-	private void generateTapFile(File file, TestSet testSet) {
-		String fileName = file.getAbsolutePath();
-		String tapFileName = fileName + TAP_EXT;
-
-		DumperOptions options = new DumperOptions();
-		options.setPrintDiagnostics(true);
-		options.setCharset(charset.name());
-		Producer tapProducer = TapProducerFactory.makeTap13YamlProducer();
-		Writer out;
-		try {
-			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tapFileName), charset));
-			tapProducer.dump(testSet, out);
-			out.close();
-		} catch (FileNotFoundException fileNotFoundException) {
-			throw new ParserException("TAP file not found: " + tapFileName, fileNotFoundException);
-		} catch (IOException e) {
-			throw new ParserException("Error IOException: " + e.getMessage(), e);
-		}
-
 	}
 
 	/**
@@ -238,7 +137,7 @@ public class JmeterResultParser {
 	private String requestHeader(HttpSample httpSample) {
 		String dump = "requestHeader: ";
 		if (httpSample.getRequestHeader() != null) {
-			dump = dump + httpSample.getRequestHeader().getValue() + LINE_SEPARATOR;
+			dump = dump + httpSample.getRequestHeader().getValue() + FileUtils.LINE_SEPARATOR;
 		}
 		return dump;
 	}
@@ -246,14 +145,15 @@ public class JmeterResultParser {
 	private String queryString(HttpSample httpSample) {
 		String dump = "queryString: ";
 		if (httpSample.getQueryString() != null) {
-			dump = dump + httpSample.getQueryString().getValue() + LINE_SEPARATOR;
+			dump = dump + httpSample.getQueryString().getValue() + FileUtils.LINE_SEPARATOR;
 		}
 		return dump;
 	}
+
 	private String response(HttpSample httpSample) {
 		String dump = "response: ";
 		if (httpSample.getResponseData() != null) {
-			dump = dump + httpSample.getResponseData().getValue() + LINE_SEPARATOR;
+			dump = dump + httpSample.getResponseData().getValue() + FileUtils.LINE_SEPARATOR;
 		}
 		return dump;
 	}
